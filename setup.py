@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="apmpython",
-    version="0.1",
+    version="0.1.1",
     author="Nidhi_Sharma",
     description="This package is use to check the RAM and CPU Usage of Current Device.",
     long_description=open('README.txt').read(),
