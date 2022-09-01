@@ -10,10 +10,10 @@ from ddtrace.runtime import RuntimeMetrics
 RuntimeMetrics.enable()
 
 server = Server()
-server.watch('CheckUtil.py', delay=5)
-server.serve(root='build\lib\CheckUtil')
+server.watch('apmpython.py', delay=5)
+server.serve(root='build\lib\apmpython')
 
-class CheckUtil:
+class apmpython:
     
     def cpu_usage():
         process = psutil.Process(os.getpid())
