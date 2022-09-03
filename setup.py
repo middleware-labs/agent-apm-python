@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name="mw-python-apm",
+    name="apmpython",
     version="1.0.6",
     author="middleware-dev",
     description="This package is use to check the RAM and CPU Usage of Current Device.",
