@@ -9,6 +9,11 @@ from livereload import Server, shell
 from ddtrace.runtime import RuntimeMetrics
 RuntimeMetrics.enable()
 
+from opentelemetry.metrics import get_meter
+meter = get_meter("example-meter")
+counter = meter.create_counter("example-counter")
+
+
 server = Server()
 server.watch('apmpython.py', delay=5)
 server.serve(root='build\lib\apmpython')
