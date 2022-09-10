@@ -9,7 +9,8 @@ from ddtrace.runtime import RuntimeMetrics
 RuntimeMetrics.enable()
 
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.metrics import (get_meter_provider,set_meter_provider,)
+from opentelemetry._metrics import get_meter_provider
+from opentelemetry._metrics import set_meter_provider
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from prometheus_client import Gauge
