@@ -8,9 +8,9 @@ from sys import getswitchinterval
 from ddtrace.runtime import RuntimeMetrics
 RuntimeMetrics.enable()
 
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry._metrics import get_meter_provider
-from opentelemetry._metrics import set_meter_provider
+""" from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.metrics import get_meter_provider
+from opentelemetry.metrics import set_meter_provider
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from prometheus_client import Gauge
@@ -22,67 +22,56 @@ reader = PeriodicExportingMetricReader(exporter)
 provider = MeterProvider(metric_readers=[reader])
 set_meter_provider(provider)
 
-meter = get_meter_provider().get_meter("sample")
-
-# todo_gauge = meter.create_observable_gauge(name="sample",unit="0.1.2")
-
-
-
-class apmpython:
+meter = get_meter_provider().get_meter("sample") """
     
-    def cpu_usage(self):
-        process = psutil.Process(os.getpid())
-        print("CPU Usage: ",process.cpu_percent())
-        # todo_gauge.observe(process.cpu_percent())
+def cpu_usage(self):
+    process = psutil.Process(os.getpid())
+    print("CPU Usage: ",process.cpu_percent())
+    # todo_gauge.observe(process.cpu_percent())
 
-    def ram_usage(self):
-        process = psutil.Process(os.getpid())
-        print("RAM Usage: ",process.memory_percent())
-        # todo_gauge.observe(process.memory_percent())
+def ram_usage(self):
+    process = psutil.Process(os.getpid())
+    print("RAM Usage: ",process.memory_percent())
+    # todo_gauge.observe(process.memory_percent())
 
-    def disk_usage(self):
-        print("Disk Usage: ",psutil.disk_usage(os.sep).percent)
-        # todo_gauge.observe(process.disk_usage())
-    
-    def thread_count(self):
-        print("Thread Count: ",threading.active_count())
-        # todo_gauge.observe(threading.active_count())
-    
-    def gen0(self):
-        print("Gen 0: ",gc.get_count()[0])
-        # todo_gauge.observe(gc.get_count()[0])
+def disk_usage(self):
+    print("Disk Usage: ",psutil.disk_usage(os.sep).percent)
+    # todo_gauge.observe(process.disk_usage())
 
-    def gen1(self):
-        print("Gen 1: ",gc.get_count()[1])
-        # todo_gauge.observe(gc.get_count()[1])
+def thread_count(self):
+    print("Thread Count: ",threading.active_count())
+    # todo_gauge.observe(threading.active_count())
 
-    def gen2(self):
-        print("Gen 2: ",gc.get_count()[2])
-        # todo_gauge.observe(gc.get_count()[2])
-    
-    def context_switch(self):
-        print("Context Switches: ",getswitchinterval())
-        # todo_gauge.observe(getswitchinterval())
+def gen0(self):
+    print("Gen 0: ",gc.get_count()[0])
+    # todo_gauge.observe(gc.get_count()[0])
+
+def gen1(self):
+    print("Gen 1: ",gc.get_count()[1])
+    # todo_gauge.observe(gc.get_count()[1])
+
+def gen2(self):
+    print("Gen 2: ",gc.get_count()[2])
+    # todo_gauge.observe(gc.get_count()[2])
+
+def context_switch(self):
+    print("Context Switches: ",getswitchinterval())
+    # todo_gauge.observe(getswitchinterval())
 
 
 def collection():
-
-    tracker = apmpython()
-    i=0
     while True:
-        tracker.cpu_usage()
-        tracker.ram_usage()
-        tracker.disk_usage()
-        tracker.thread_count()
-        tracker.gen0()
-        tracker.gen1()
-        tracker.gen2()
-        tracker.context_switch()
+        cpu_usage()
+        ram_usage()
+        disk_usage()
+        thread_count()
+        gen0()
+        gen1()
+        gen2()
+        context_switch()
         time.sleep(5)
         print("--------------------------------------------")
-        i=1+1
-        if i > 10:
-            break
+
 
 
 
