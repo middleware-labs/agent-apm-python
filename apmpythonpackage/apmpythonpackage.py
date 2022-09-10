@@ -24,7 +24,7 @@ set_meter_provider(provider)
 
 meter = get_meter_provider().get_meter("sample") """
 
-class apmpython:  
+class apmpythonclass:  
     def cpu_usage(self):
         process = psutil.Process(os.getpid())
         print("CPU Usage: ",process.cpu_percent())
@@ -61,7 +61,7 @@ class apmpython:
 
 
     def collection(self):
-        tracker = apmpython()
+        tracker = apmpythonclass()
         while True:
             tracker.cpu_usage()
             tracker.ram_usage()
