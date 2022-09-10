@@ -24,52 +24,52 @@ set_meter_provider(provider)
 
 meter = get_meter_provider().get_meter("sample") """
 
+class apmpython:  
+    def cpu_usage(self):
+        process = psutil.Process(os.getpid())
+        print("CPU Usage: ",process.cpu_percent())
+        # todo_gauge.observe(process.cpu_percent())
 
-    
-def cpu_usage():
-    process = psutil.Process(os.getpid())
-    print("CPU Usage: ",process.cpu_percent())
-    # todo_gauge.observe(process.cpu_percent())
+    def ram_usage(self):
+        process = psutil.Process(os.getpid())
+        print("RAM Usage: ",process.memory_percent())
+        # todo_gauge.observe(process.memory_percent())
 
-def ram_usage():
-    process = psutil.Process(os.getpid())
-    print("RAM Usage: ",process.memory_percent())
-    # todo_gauge.observe(process.memory_percent())
+    def disk_usage(self):
+        print("Disk Usage: ",psutil.disk_usage(os.sep).percent)
+        # todo_gauge.observe(process.disk_usage())
 
-def disk_usage():
-    print("Disk Usage: ",psutil.disk_usage(os.sep).percent)
-    # todo_gauge.observe(process.disk_usage())
+    def thread_count(self):
+        print("Thread Count: ",threading.active_count())
+        # todo_gauge.observe(threading.active_count())
 
-def thread_count():
-    print("Thread Count: ",threading.active_count())
-    # todo_gauge.observe(threading.active_count())
+    def gen0(self):
+        print("Gen 0: ",gc.get_count()[0])
+        # todo_gauge.observe(gc.get_count()[0])
 
-def gen0():
-    print("Gen 0: ",gc.get_count()[0])
-    # todo_gauge.observe(gc.get_count()[0])
+    def gen1(self):
+        print("Gen 1: ",gc.get_count()[1])
+        # todo_gauge.observe(gc.get_count()[1])
 
-def gen1():
-    print("Gen 1: ",gc.get_count()[1])
-    # todo_gauge.observe(gc.get_count()[1])
+    def gen2(self):
+        print("Gen 2: ",gc.get_count()[2])
+        # todo_gauge.observe(gc.get_count()[2])
 
-def gen2():
-    print("Gen 2: ",gc.get_count()[2])
-    # todo_gauge.observe(gc.get_count()[2])
-
-def context_switch():
-    print("Context Switches: ",getswitchinterval())
-    # todo_gauge.observe(getswitchinterval())
+    def context_switch(self):
+        print("Context Switches: ",getswitchinterval())
+        # todo_gauge.observe(getswitchinterval())
 
 
-def collection():
-    while True:
-        cpu_usage()
-        ram_usage()
-        disk_usage()
-        thread_count()
-        gen0()
-        gen1()
-        gen2()
-        context_switch()
-        time.sleep(5)
-        print("--------------------------------------------")
+    def collection(self):
+        tracker = apmpython()
+        while True:
+            tracker.cpu_usage()
+            tracker.ram_usage()
+            tracker.disk_usage()
+            tracker.thread_count()
+            tracker.gen0()
+            tracker.gen1()
+            tracker.gen2()
+            tracker.context_switch()
+            time.sleep(5)
+            print("--------------------------------------------")
