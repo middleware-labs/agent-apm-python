@@ -8,7 +8,7 @@ from sys import getswitchinterval
 from ddtrace.runtime import RuntimeMetrics
 RuntimeMetrics.enable()
 
-""" from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 from opentelemetry.metrics import get_meter_provider
 from opentelemetry.metrics import set_meter_provider
 from opentelemetry.sdk.metrics import MeterProvider
@@ -22,7 +22,7 @@ reader = PeriodicExportingMetricReader(exporter)
 provider = MeterProvider(metric_readers=[reader])
 set_meter_provider(provider)
 
-meter = get_meter_provider().get_meter("sample") """
+meter = get_meter_provider().get_meter("sample")
 
 class apmpythonclass:  
     def cpu_usage(self):
