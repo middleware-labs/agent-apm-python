@@ -5,23 +5,25 @@ import time
 import threading
 import gc
 from sys import getswitchinterval
-from ddtrace.runtime import RuntimeMetrics
-RuntimeMetrics.enable()
-
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.metrics import (get_meter_provider,set_meter_provider,)
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from prometheus_client import Gauge
-from opentelemetry.metrics import get_meter
+from fluent import sender
+# from ddtrace.runtime import RuntimeMetrics
+# RuntimeMetrics.enable()
 
 
-exporter = OTLPMetricExporter(insecure=True)
-reader = PeriodicExportingMetricReader(exporter)
-provider = MeterProvider(metric_readers=[reader])
-set_meter_provider(provider)
+# from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+# from opentelemetry.metrics import (get_meter_provider,set_meter_provider,)
+# from opentelemetry.sdk.metrics import MeterProvider
+# from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+# from prometheus_client import Gauge
+# from opentelemetry.metrics import get_meter
 
-meter = get_meter_provider().get_meter("sample")
+
+# exporter = OTLPMetricExporter(insecure=True)
+# reader = PeriodicExportingMetricReader(exporter)
+# provider = MeterProvider(metric_readers=[reader])
+# set_meter_provider(provider)
+
+# meter = get_meter_provider().get_meter("sample")
 
 # todo_gauge = meter.create_observable_gauge(name="sample",unit="0.1.2")
 
@@ -82,6 +84,11 @@ def collection():
         i=1+1
         if i > 10:
             break
+
+def logemit(arg1, arg2):
+    logger = sender.FluentSender('app', host='localhost', port=8006)
+    logger.emit(arg1, arg2)
+
 
 
 
