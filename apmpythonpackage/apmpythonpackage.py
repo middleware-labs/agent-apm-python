@@ -5,6 +5,7 @@ import time
 import threading
 import gc
 from sys import getswitchinterval
+<<<<<<< HEAD
 from fluent import sender
 # from ddtrace.runtime import RuntimeMetrics
 # RuntimeMetrics.enable()
@@ -23,6 +24,39 @@ from fluent import sender
 # provider = MeterProvider(metric_readers=[reader])
 # set_meter_provider(provider)
 
+=======
+<<<<<<< HEAD:apmpython/apmpython.py
+from fluent import sender
+# from ddtrace.runtime import RuntimeMetrics
+# RuntimeMetrics.enable()
+=======
+from ddtrace.runtime import RuntimeMetrics
+RuntimeMetrics.enable()
+
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.metrics import get_meter_provider
+from opentelemetry.metrics import set_meter_provider
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from prometheus_client import Gauge
+from opentelemetry.metrics import get_meter
+>>>>>>> 7a3d3327e25943e26a1ffeb77fdd0f294d0797b1:apmpythonpackage/apmpythonpackage.py
+
+
+# from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+# from opentelemetry.metrics import (get_meter_provider,set_meter_provider,)
+# from opentelemetry.sdk.metrics import MeterProvider
+# from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+# from prometheus_client import Gauge
+# from opentelemetry.metrics import get_meter
+
+
+# exporter = OTLPMetricExporter(insecure=True)
+# reader = PeriodicExportingMetricReader(exporter)
+# provider = MeterProvider(metric_readers=[reader])
+# set_meter_provider(provider)
+
+>>>>>>> 0d2e6a61b4395dfcc93fe6b00ca9fd5e5608a69e
 # meter = get_meter_provider().get_meter("sample")
 
 class apmpythonclass:  
@@ -61,6 +95,36 @@ class apmpythonclass:
         # todo_gauge.observe(getswitchinterval())
 
 
+<<<<<<< HEAD:apmpython/apmpython.py
+def collection():
+
+    tracker = apmpython()
+    i=0
+    while True:
+        tracker.cpu_usage()
+        tracker.ram_usage()
+        tracker.disk_usage()
+        tracker.thread_count()
+        tracker.gen0()
+        tracker.gen1()
+        tracker.gen2()
+        tracker.context_switch()
+        time.sleep(5)
+        print("--------------------------------------------")
+        i=1+1
+        if i > 10:
+            break
+
+def logemit(arg1, arg2):
+    logger = sender.FluentSender('app', host='localhost', port=8006)
+    logger.emit(arg1, arg2)
+
+
+
+
+    
+  
+=======
     def collection(self):
         tracker = apmpythonclass()
         while True:
@@ -74,8 +138,12 @@ class apmpythonclass:
             tracker.context_switch()
             time.sleep(5)
             print("--------------------------------------------")
+<<<<<<< HEAD
 
     
     def logemit(arg1, arg2):
         logger = sender.FluentSender('app', host='localhost', port=8006)
         logger.emit(arg1, arg2)
+=======
+>>>>>>> 7a3d3327e25943e26a1ffeb77fdd0f294d0797b1:apmpythonpackage/apmpythonpackage.py
+>>>>>>> 0d2e6a61b4395dfcc93fe6b00ca9fd5e5608a69e
