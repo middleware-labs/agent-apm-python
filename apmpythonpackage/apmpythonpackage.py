@@ -1,101 +1,29 @@
 from concurrent.futures import process
 import psutil
 import os
-import random
 import time
 import threading
 import gc
 from sys import getswitchinterval
-""" from ddtrace.runtime import RuntimeMetrics
-RuntimeMetrics.enable() """
+from fluent import sender
+logger = sender.FluentSender('app', host='127.0.0.1', port=8006)
 
-# from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-# from opentelemetry.metrics import get_meter_provider
-# from opentelemetry.metrics import set_meter_provider
-from opentelemetry.sdk.metrics import MeterProvider
-# from opentelemetry.sdk.metrics.measurement import Measurement
-from opentelemetry.sdk.metrics.export import (
-    HistogramDataPoint,
-    Metric,
-    MetricExportResult,
-    MetricsData,
-    NumberDataPoint,
-    ResourceMetrics,
-    ScopeMetrics,
-    Gauge,
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.wsgi import collect_request_attributes
+from opentelemetry.propagate import extract
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
 )
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
-    OTLPMetricExporter,
-)
-from opentelemetry.proto.common.v1.common_pb2 import (
-    AnyValue,
-    InstrumentationScope,
-    KeyValue,
-)
-from opentelemetry.proto.resource.v1.resource_pb2 import (
-    Resource,
-)
-# from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-# from prometheus_client import Gauge
-# from opentelemetry.metrics import get_meter
-
-
-exporter = OTLPMetricExporter(insecure=True)
-# reader = PeriodicExportingMetricReader(exporter)
-meter = MeterProvider().get_meter("sample")
-todo_gauge = meter.create_observable_gauge("sample")
-# set_meter_provider(provider)
-
-# meter = get_meter_provider().get_meter("sample")
-
 
 class apmpythonclass:  
     def cpu_usage(self):
         process = psutil.Process(os.getpid())
         print("CPU Usage: ",process.cpu_percent())
-        attributes = {"cpu_number": str(1)}
-        exporter.export(
-            MetricsData(
-                resource_metrics=[ResourceMetrics(
-                    schema_url="",
-                    resource=Resource(
-                        attributes=[KeyValue(
-                            key="a",
-                            value=AnyValue(
-                                string_value="1"
-                            )
-                        )],
-                        # schema_url="resource_schema_url",
-                    ),
-                    scope_metrics=[
-                        ScopeMetrics(
-                            scope=InstrumentationScope(
-                                name="first name",
-                                version="first version"
-                            ),
-                            schema_url="",
-                            metrics=[Metric(
-                                name="123",
-                                description="456",
-                                unit="core",
-                                data=Gauge(
-                                    data_points=[
-                                        NumberDataPoint(
-                                            attributes=attributes,
-                                            start_time_unix_nano=1641946015139533244,
-                                            time_unix_nano=1641946016139533244,
-                                            value=random.randint(1, 50),
-                                        )
-                                    ],
-                                )
-                            )]
-                        )
-                    ]
-                )]
-            )
-        )
-        # yield Measurement(process.cpu_percent(), todo_gauge, attributes)
-
+        # todo_gauge.observe(process.cpu_percent())
+        
     def ram_usage(self):
         process = psutil.Process(os.getpid())
         print("RAM Usage: ",process.memory_percent())
@@ -126,6 +54,7 @@ class apmpythonclass:
         # todo_gauge.observe(getswitchinterval())
 
 
+
     def collection(self):
         tracker = apmpythonclass()
         while True:
@@ -140,5 +69,16 @@ class apmpythonclass:
             time.sleep(5)
             print("--------------------------------------------")
 
-tracker = apmpythonclass()
-tracker.cpu_usage()
+    # logs method
+    def logemit(self, arg1, arg2):
+        logger.emit(arg1, arg2)
+
+    # tracing method
+    def mw_tracer(self):
+        trace.set_tracer_provider(TracerProvider())
+        tracer = trace.get_tracer_provider().get_tracer(__name__)
+        otlp_exporter = OTLPSpanExporter(endpoint="127.0.0.1:4320", insecure=True)
+        span_processor = BatchSpanProcessor(otlp_exporter)
+        trace.get_tracer_provider().add_span_processor(
+            span_processor)
+        return tracer, trace, extract, collect_request_attributes
