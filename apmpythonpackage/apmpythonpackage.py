@@ -6,6 +6,7 @@ import threading
 import gc
 from sys import getswitchinterval
 from fluent import sender
+logger = sender.FluentSender('app', host='127.0.0.1', port=8006)
 # from ddtrace.runtime import RuntimeMetrics
 # RuntimeMetrics.enable()
 
@@ -76,7 +77,5 @@ class apmpythonclass:
             print("--------------------------------------------")
 
     
-    def logemit(arg1, arg2):
-        logger = sender.FluentSender('app', host='localhost', port=8006)
+    def logemit(self, arg1, arg2):
         logger.emit(arg1, arg2)
-
