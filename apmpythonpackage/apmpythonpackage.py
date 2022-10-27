@@ -53,7 +53,9 @@ class apmpythonclass:
         print("Context Switches: ",getswitchinterval())
         # todo_gauge.observe(getswitchinterval())
 
-
+    def collect(self):
+        t1 = threading.Thread(target=self.collection)
+        t1.start()
 
     def collection(self):
         tracker = apmpythonclass()
