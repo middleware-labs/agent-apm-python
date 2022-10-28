@@ -6,7 +6,9 @@ import threading
 import gc
 from sys import getswitchinterval
 from fluent import sender
-logger = sender.FluentSender('app', host='127.0.0.1', port=8006)
+
+mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
+logger = sender.FluentSender('app', host=mw_agent_target, port=8006)
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -17,6 +19,7 @@ from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
 )
+
 
 class apmpythonclass:  
     def cpu_usage(self):
@@ -79,7 +82,7 @@ class apmpythonclass:
     def mw_tracer(self):
         trace.set_tracer_provider(TracerProvider())
         tracer = trace.get_tracer_provider().get_tracer(__name__)
-        otlp_exporter = OTLPSpanExporter(endpoint="127.0.0.1:4320", insecure=True)
+        otlp_exporter = OTLPSpanExporter(endpoint=mw_agent_target + ":4320", insecure=True)
         span_processor = BatchSpanProcessor(otlp_exporter)
         trace.get_tracer_provider().add_span_processor(
             span_processor)
