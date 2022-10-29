@@ -82,7 +82,7 @@ class apmpythonclass:
     def mw_tracer(self):
         trace.set_tracer_provider(TracerProvider())
         tracer = trace.get_tracer_provider().get_tracer(__name__)
-        otlp_exporter = OTLPSpanExporter(endpoint=mw_agent_target + ":4320", insecure=True)
+        otlp_exporter = OTLPSpanExporter(endpoint=mw_agent_target + ":9319", insecure=True)
         span_processor = BatchSpanProcessor(otlp_exporter)
         trace.get_tracer_provider().add_span_processor(
             span_processor)
