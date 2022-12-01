@@ -78,6 +78,19 @@ class apmpythonclass:
     def logemit(self, arg1, arg2):
         logger.emit(arg1, arg2)
 
+    def error(self,tag,error):
+        logger.emit(tag, {'level': 'error', 'message': error})
+
+    def info(self,tag,info):
+            logger.emit(tag, {'level': 'info', 'message': info})
+
+    def warn(self,tag,warn):
+                logger.emit(tag, {'level': 'warn', 'message': warn})
+
+    def debug(self,tag,debug):
+                    logger.emit(tag, {'level': 'debug', 'message': debug})
+
+
     # tracing method
     def mw_tracer(self):
         trace.set_tracer_provider(TracerProvider())
@@ -87,3 +100,8 @@ class apmpythonclass:
         trace.get_tracer_provider().add_span_processor(
             span_processor)
         return tracer, trace, extract, collect_request_attributes
+
+    def record_error(self,error):
+         span = trace.get_current_span()
+         span.record_exception(error)
+         span.set_status(trace.Status(trace.StatusCode.ERROR, str(error)))
