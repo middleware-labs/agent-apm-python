@@ -21,39 +21,39 @@ from opentelemetry.sdk.trace.export import (
 )
 
 
-class apmpythonclass:  
+class apmpythonclass:
     def cpu_usage(self):
         process = psutil.Process(os.getpid())
-        print("CPU Usage: ",process.cpu_percent())
+        print("CPU Usage: ", process.cpu_percent())
         # todo_gauge.observe(process.cpu_percent())
-        
+
     def ram_usage(self):
         process = psutil.Process(os.getpid())
-        print("RAM Usage: ",process.memory_percent())
+        print("RAM Usage: ", process.memory_percent())
         # todo_gauge.observe(process.memory_percent())
 
     def disk_usage(self):
-        print("Disk Usage: ",psutil.disk_usage(os.sep).percent)
+        print("Disk Usage: ", psutil.disk_usage(os.sep).percent)
         # todo_gauge.observe(process.disk_usage())
 
     def thread_count(self):
-        print("Thread Count: ",threading.active_count())
+        print("Thread Count: ", threading.active_count())
         # todo_gauge.observe(threading.active_count())
 
     def gen0(self):
-        print("Gen 0: ",gc.get_count()[0])
+        print("Gen 0: ", gc.get_count()[0])
         # todo_gauge.observe(gc.get_count()[0])
 
     def gen1(self):
-        print("Gen 1: ",gc.get_count()[1])
+        print("Gen 1: ", gc.get_count()[1])
         # todo_gauge.observe(gc.get_count()[1])
 
     def gen2(self):
-        print("Gen 2: ",gc.get_count()[2])
+        print("Gen 2: ", gc.get_count()[2])
         # todo_gauge.observe(gc.get_count()[2])
 
     def context_switch(self):
-        print("Context Switches: ",getswitchinterval())
+        print("Context Switches: ", getswitchinterval())
         # todo_gauge.observe(getswitchinterval())
 
     def collect(self):
@@ -78,18 +78,17 @@ class apmpythonclass:
     def logemit(self, arg1, arg2):
         logger.emit(arg1, arg2)
 
-    def error(self,tag,error):
-        logger.emit(tag, {'level': 'error', 'message': error})
+    def error(self, error):
+        logger.emit('python-apm', {'level': 'error', 'message': error})
 
-    def info(self,tag,info):
-            logger.emit(tag, {'level': 'info', 'message': info})
+    def info(self, info):
+        logger.emit('python-apm', {'level': 'info', 'message': info})
 
-    def warn(self,tag,warn):
-                logger.emit(tag, {'level': 'warn', 'message': warn})
+    def warn(self, warn):
+        logger.emit('python-apm', {'level': 'warn', 'message': warn})
 
-    def debug(self,tag,debug):
-                    logger.emit(tag, {'level': 'debug', 'message': debug})
-
+    def debug(self, debug):
+        logger.emit('python-apm', {'level': 'debug', 'message': debug})
 
     # tracing method
     def mw_tracer(self):
@@ -101,7 +100,7 @@ class apmpythonclass:
             span_processor)
         return tracer, trace, extract, collect_request_attributes
 
-    def record_error(self,error):
-         span = trace.get_current_span()
-         span.record_exception(error)
-         span.set_status(trace.Status(trace.StatusCode.ERROR, str(error)))
+    def record_error(self, error):
+        span = trace.get_current_span()
+        span.record_exception(error)
+        span.set_status(trace.Status(trace.StatusCode.ERROR, str(error)))
