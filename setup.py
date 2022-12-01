@@ -3,7 +3,7 @@ import setuptools
 setuptools.setup(
 
     name="middleware-apm",
-    version="0.1.10",
+    version="0.1.11",
 
     author="middleware-dev",
     description="This package is use to check the RAM and CPU Usage of Current Device.",
