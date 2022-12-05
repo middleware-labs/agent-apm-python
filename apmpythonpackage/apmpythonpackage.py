@@ -6,6 +6,7 @@ import threading
 import gc
 from sys import getswitchinterval
 from fluent import sender
+from opentelemetry.sdk.resources import Resource
 
 mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 logger = sender.FluentSender('app', host=mw_agent_target, port=8006)
@@ -91,8 +92,11 @@ class apmpythonclass:
         logger.emit('python-apm', {'level': 'debug', 'message': debug})
 
     # tracing method
-    def mw_tracer(self):
-        trace.set_tracer_provider(TracerProvider())
+    def mw_tracer(self, project_name='demo-project', service_name='demo-service'):
+        trace.set_tracer_provider(TracerProvider(resource=Resource.create({
+            "service.name": service_name,
+            "project.name": project_name,
+        })))
         tracer = trace.get_tracer_provider().get_tracer(__name__)
         otlp_exporter = OTLPSpanExporter(endpoint=mw_agent_target + ":9319", insecure=True)
         span_processor = BatchSpanProcessor(otlp_exporter)
