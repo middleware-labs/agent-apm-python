@@ -80,8 +80,8 @@ class apmpythonclass:
             print("--------------------------------------------")
 
     # logs method
-    def logemit(self, arg1, arg2):
-        logger.emit(arg1, arg2)
+    # def logemit(self, arg1, arg2):
+    #     logger.emit(arg1, arg2)
 
     def severitylog(self, severity, message):
         logger.emit('python-apm', {
