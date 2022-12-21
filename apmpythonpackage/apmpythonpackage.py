@@ -11,6 +11,7 @@ from opentelemetry.sdk.resources import Resource
 pid = os.getpid()
 default_project_name = "Project-" + str(pid)
 default_service_name = "Service-" + str(pid)
+
 mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 logger = sender.FluentSender('app', host=mw_agent_target, port=8006)
 
@@ -79,22 +80,28 @@ class apmpythonclass:
             print("--------------------------------------------")
 
     # logs method
+    # def logemit(self, arg1, arg2):
+    #     logger.emit(arg1, arg2)
+
+    def severitylog(self, severity, message):
+        logger.emit('python-apm', {
+            'level': severity,
+            'message': message,
+            'project.name': default_project_name,
+            'service.name': default_service_name
+        })
 
     def error(self, error):
-        logger.emit('python-apm', {'level': 'error', 'message': error, 'project.name': default_project_name,
-                                   'service.name': default_service_name})
-
+        self.severitylog('error', error)
+        
     def info(self, info):
-        logger.emit('python-apm', {'level': 'info', 'message': info, 'project.name': default_project_name,
-                                   'service.name': default_service_name})
+        self.severitylog('info', info)
 
     def warn(self, warn):
-        logger.emit('python-apm', {'level': 'warn', 'message': warn, 'project.name': default_project_name,
-                                   'service.name': default_service_name})
+        self.severitylog('warn', warn)
 
     def debug(self, debug):
-        logger.emit('python-apm', {'level': 'debug', 'message': debug, 'project.name': default_project_name,
-                                   'service.name': default_service_name})
+        self.severitylog('debug', debug)
 
     # tracing method
     def mw_tracer(self, project_name=default_project_name, service_name=default_service_name):
@@ -104,7 +111,9 @@ class apmpythonclass:
         if type(service_name) is not str:
             print("service name must be a string")
             return
+        global default_project_name 
         default_project_name = str(project_name)
+        global default_service_name 
         default_service_name = str(service_name)
         trace.set_tracer_provider(TracerProvider(resource=Resource.create({
             "service.name": service_name,
