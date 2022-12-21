@@ -130,3 +130,13 @@ class apmpythonclass:
         span = trace.get_current_span()
         span.record_exception(error)
         span.set_status(trace.Status(trace.StatusCode.ERROR, str(error)))
+
+    def set_attribute(self, name, value):
+        if type(name) is not str:
+            print("name must be a string")
+            return
+        if type(value) is not str:
+            print("value must be a string")
+            return
+        span = trace.get_current_span()
+        span.set_attribute(name, value)
