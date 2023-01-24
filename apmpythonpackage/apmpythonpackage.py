@@ -1,5 +1,5 @@
 from concurrent.futures import process
-import psutil
+# import psutil
 import os
 import time
 import threading
@@ -28,17 +28,20 @@ from opentelemetry.sdk.trace.export import (
 
 class apmpythonclass:
     def cpu_usage(self):
-        process = psutil.Process(os.getpid())
-        print("CPU Usage: ", process.cpu_percent())
+        print("cpu usage")
+        # process = psutil.Process(os.getpid())
+        # print("CPU Usage: ", process.cpu_percent())
         # todo_gauge.observe(process.cpu_percent())
 
     def ram_usage(self):
-        process = psutil.Process(os.getpid())
-        print("RAM Usage: ", process.memory_percent())
+        print("ram usage")
+        # process = psutil.Process(os.getpid())
+        # print("RAM Usage: ", process.memory_percent())
         # todo_gauge.observe(process.memory_percent())
 
     def disk_usage(self):
-        print("Disk Usage: ", psutil.disk_usage(os.sep).percent)
+        print("disk usage")
+        # print("Disk Usage: ", psutil.disk_usage(os.sep).percent)
         # todo_gauge.observe(process.disk_usage())
 
     def thread_count(self):
