@@ -6,7 +6,6 @@ import threading
 import gc
 from sys import getswitchinterval
 from fluent import sender
-from opentelemetry.sdk.resources import Resource
 
 pid = os.getpid()
 default_project_name = "Project-" + str(pid)
@@ -16,15 +15,6 @@ mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 logger = sender.FluentSender('app', host=mw_agent_target, port=8006)
 
 from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.wsgi import collect_request_attributes
-from opentelemetry.propagate import extract
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    ConsoleSpanExporter,
-)
-
 
 class apmpythonclass:
     def cpu_usage(self):
@@ -82,12 +72,9 @@ class apmpythonclass:
             time.sleep(5)
             print("--------------------------------------------")
 
-    # logs method
-    # def logemit(self, arg1, arg2):
-    #     logger.emit(arg1, arg2)
 
     def severitylog(self, severity, message):
-        logger.emit('python-apm', {
+        logger.emit(default_project_name, {
             'level': severity,
             'message': message,
             'project.name': default_project_name,
@@ -96,7 +83,7 @@ class apmpythonclass:
 
     def error(self, error):
         self.severitylog('error', error)
-        
+
     def info(self, info):
         self.severitylog('info', info)
 
@@ -114,20 +101,10 @@ class apmpythonclass:
         if type(service_name) is not str:
             print("service name must be a string")
             return
-        global default_project_name 
+        global default_project_name
         default_project_name = str(project_name)
-        global default_service_name 
+        global default_service_name
         default_service_name = str(service_name)
-        trace.set_tracer_provider(TracerProvider(resource=Resource.create({
-            "service.name": service_name,
-            "project.name": project_name,
-        })))
-        tracer = trace.get_tracer_provider().get_tracer(__name__)
-        otlp_exporter = OTLPSpanExporter(endpoint=mw_agent_target + ":9319", insecure=True)
-        span_processor = BatchSpanProcessor(otlp_exporter)
-        trace.get_tracer_provider().add_span_processor(
-            span_processor)
-        return tracer, trace, extract, collect_request_attributes
 
     def record_error(self, error):
         span = trace.get_current_span()
