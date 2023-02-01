@@ -87,7 +87,7 @@ opentelemetry-util-http==0.36b0
 # pkginfo==1.9.6
 # progressbar==2.5
 # protobuf==4.21.12
-psutil==5.5.1
+# psutil==5.5.1
 # pyasn1==0.4.2
 # pycairo==1.16.2
 # PyChromecast==4.1.0
@@ -106,7 +106,7 @@ psutil==5.5.1
 # python-apt==2.0.0+ubuntu0.20.4.8
 python-dateutil==2.7.3
 pytz==2019.3
-pyxattr==0.6.1
+# pyxattr==0.6.1
 pyxdg==0.26
 PyYAML==5.3.1
 readme-renderer==37.3
