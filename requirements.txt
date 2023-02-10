@@ -17,6 +17,6 @@ opentelemetry-semantic-conventions==0.36b0
 opentelemetry-util-http==0.36b0
 PyYAML==5.3.1
 requests==2.22.0
-thrift==0.16.017
+thrift==0.16.0
 # webencodings==0.5.1
 # websocket-client==0.53.0
