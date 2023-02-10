@@ -91,7 +91,7 @@ pytz==2019.3
 pyxattr==0.6.1
 pyxdg==0.26
 PyYAML==5.3.1
-reportlab==3.5.34
+reportlab==3.5.55
 requests==2.22.0
 requests-unixsocket==0.2.0
 roman==2.0.0
