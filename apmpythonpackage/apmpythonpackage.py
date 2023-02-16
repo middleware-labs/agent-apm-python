@@ -6,6 +6,15 @@ import threading
 import gc
 from sys import getswitchinterval
 from fluent import sender
+import logging
+
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
+    OTLPLogExporter,
+)
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.sdk.resources import Resource
 
 pid = os.getpid()
 default_project_name = "Project-" + str(pid)
@@ -105,6 +114,22 @@ class apmpythonclass:
         default_project_name = str(project_name)
         global default_service_name
         default_service_name = str(service_name)
+
+
+    def mw_handler  (self):
+        logger_provider = LoggerProvider(
+            resource=Resource.create(
+                {
+                    "service.name": default_service_name,
+                    'project.name': default_project_name
+                }
+            ),
+        )
+        set_logger_provider(logger_provider)
+        exporter = OTLPLogExporter(insecure=True,endpoint=mw_agent_target+":9319")
+        logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
+        handler = LoggingHandler(level=logging.NOTSET, logger_provider=logger_provider)
+        return handler
 
     def record_error(self, error):
         span = trace.get_current_span()
