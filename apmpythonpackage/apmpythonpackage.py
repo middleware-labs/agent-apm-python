@@ -2,8 +2,10 @@ from concurrent.futures import process
 # import psutil
 import os
 import time
+import pyroscope
 import threading
 import gc
+import requests, json
 from sys import getswitchinterval
 from fluent import sender
 import logging
@@ -103,7 +105,48 @@ class apmpythonclass:
         self.severitylog('debug', debug)
 
     # tracing method
-    def mw_tracer(self, project_name=default_project_name, service_name=default_service_name):
+    def mw_tracer(self, project_name=default_project_name, service_name=default_service_name, access_token="", enabledProfiling=True):
+
+        # Profiling application, if enabled
+        if enabledProfiling and access_token != "":
+            
+            # Setting Middleware Account Authentication URL
+            authUrl = os.getenv('MW_AUTH_URL', 'https://app.middleware.io/api/v1/auth')
+
+            # Setting Middleware Profiling Server URL
+            profilingServerUrl = os.getenv('MW_PROFILING_SERVER_URL', 'https://profiling.middleware.io')
+
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded",
+                # "Authorization": "Bearer " + c.accessToken
+                "Authorization": "Bearer " + access_token
+            }
+            try:
+                response = requests.post(authUrl, headers=headers)
+
+                # Checking if auth API returns status code 200
+                if response.status_code == 200:
+                    data = json.loads(response.text)
+
+                    # Checking if a tenantID could be fetched from API Key
+                    if data["success"]:
+                        account = data["data"]["account"] 
+                        pyroscope.configure(
+                            application_name = service_name, # replace this with some name for your application
+                            server_address   = profilingServerUrl, # replace this with the address of your pyroscope server
+                            tenant_id=account,
+                        )
+                    else:
+                        print("Request failed: " + data["error"])
+                else:
+                    print("Request failed with status code: " + str(response.status_code))
+            except Exception as e:
+                print("Error making request:", e)
+        else:
+            print("Profiling is not enabled or access token is empty")
+
+        
+        # Setting values for tracing application
         if type(project_name) is not str:
             print("project name must be a string")
             return
