@@ -4,7 +4,7 @@ distro==1.4.0
 # entrypoints==0.3
 fluent-logger==0.10.0
 # googleapis-common-protos==1.58.0
-grpcio==1.48.2
+
 opentelemetry-api==1.12.0
 opentelemetry-distro==0.33b0
 opentelemetry-exporter-otlp-proto-grpc==1.12.0
