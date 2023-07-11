@@ -3,7 +3,7 @@ import setuptools
 try:
     with open("requirements.txt", "r") as f:
         requirements = f.read().splitlines()
-except FileNotFoundError:
+except IOError:
     requirements = []
 
 
