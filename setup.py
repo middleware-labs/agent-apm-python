@@ -10,7 +10,7 @@ except IOError:
 setuptools.setup(
 
     name="middleware-apm",
-    version="0.1.42rc4",
+    version="0.1.42",
     install_requires=requirements,
     author="middleware-dev",
     description="This package is use to check the RAM and CPU Usage of Current Device.",
