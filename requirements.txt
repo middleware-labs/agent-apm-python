@@ -17,6 +17,6 @@ opentelemetry-util-http==0.33b0
 PyYAML==5.3.1
 requests==2.22.0
 thrift==0.16.0
-pyroscope-io==0.8.3
+pyroscope-io==0.8.5
 # webencodings==0.5.1
 # websocket-client==0.53.0
