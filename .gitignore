@@ -2,3 +2,9 @@
 \build
 \dist
 instrumentation_env
+\src\middleware-apm
+\src\__pycache__
+\src\apmpython.pyc
+test_env
+.idea
+\apmpythonpackage
