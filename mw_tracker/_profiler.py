@@ -1,15 +1,12 @@
 import os
 import requests, json
 import pyroscope
-from opentelemetry import trace
 
 mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 
 
-def track(project_name, service_name, access_token="",
-          enabled_profiling=True) -> None:
-    # Profiling application, if enabled
-    if enabled_profiling and access_token != "":
+def collect_profiling(service_name, access_token="") -> None:
+    if access_token != "":
 
         # Setting Middleware Account Authentication URL
         auth_url = os.getenv('MW_AUTH_URL', 'https://app.middleware.io/api/v1/auth')
@@ -46,28 +43,3 @@ def track(project_name, service_name, access_token="",
             print("Error making request:", e)
     else:
         print("Profiling is not enabled or access token is empty")
-
-    # Setting values for tracing application
-    if type(project_name) is not str:
-        print("project name must be a string")
-        return
-    if type(service_name) is not str:
-        print("service name must be a string")
-        return
-
-
-def record_error(error):
-    span = trace.get_current_span()
-    span.record_exception(error)
-    span.set_status(trace.Status(trace.StatusCode.ERROR, str(error)))
-
-
-# def set_attribute(name, value):
-#     if type(name) is not str:
-#         print("name must be a string")
-#         return
-#     if type(value) is not str:
-#         print("value must be a string")
-#         return
-#     span = trace.get_current_span()
-#     span.set_attribute(name, value)
