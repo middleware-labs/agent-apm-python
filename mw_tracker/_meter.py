@@ -5,34 +5,31 @@ import gc
 from sys import getswitchinterval
 
 from opentelemetry import metrics
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.metrics import CallbackOptions, Observation
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-
+# from opentelemetry.sdk.resources import Resource
+# from opentelemetry.sdk.metrics import MeterProvider
+# from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+# from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 
 mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 
 
-def collect_metrics(project_name, service_name) -> None:
-    print("MeterProvider called here...")
-    metrics.set_meter_provider(
-        MeterProvider(
-            resource=Resource.create({
-                "service.name": service_name,
-                "project.name": project_name,
-                "mw.app.lang": "python",
-                "runtime.metrics.python": "true"
-            }),
-            metric_readers=[
-                PeriodicExportingMetricReader(
-                    OTLPMetricExporter(insecure=True, endpoint=mw_agent_target + ":9319")
-                )
-            ],
-        )
-    )
-    meter = metrics.get_meter("middleware-apm", "0.1.41")
+def collect_metrics() -> None:
+    # metrics.set_meter_provider(MeterProvider(
+    #     resource=Resource.create({
+    #         "service.name": service_name,
+    #         "project.name": project_name,
+    #         "mw.app.lang": "python",
+    #         "runtime.metrics.python": "true"
+    #     }),
+    #     metric_readers=[
+    #         PeriodicExportingMetricReader(
+    #             OTLPMetricExporter(insecure=True, endpoint=mw_agent_target + ":9319")
+    #         )
+    #     ],
+    # ))
+    provider = metrics.get_meter_provider()
+    meter = provider.get_meter("middleware-apm", "0.2.0")
     _generate_metrics(meter)
 
 
@@ -142,12 +139,13 @@ def _generate_metrics(meter):
 
 
 def _cpu_usage_cb(options: CallbackOptions):
-    print("------ Metrics generated -----")
+    print("--- Metrics Generated ---")
     yield Observation(value=psutil.Process(os.getpid()).cpu_percent())
 
 
 def _ram_usage_cb(options: CallbackOptions):
     yield Observation(value=psutil.Process(os.getpid()).memory_percent())
+
 
 def _cpu_time_callback(options: CallbackOptions):
     cpu_times = psutil.Process(os.getpid()).cpu_times()
