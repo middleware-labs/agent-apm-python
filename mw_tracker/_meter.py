@@ -139,7 +139,7 @@ def _generate_metrics(meter):
 
 
 def _cpu_usage_cb(options: CallbackOptions):
-    print("--- Metrics Generated ---")
+    # print("--- Metrics Generated ---")
     yield Observation(value=psutil.Process(os.getpid()).cpu_percent())
 
 
