@@ -1,9 +1,9 @@
 import os
 import logging
-from _meter import collect_metrics
-from _tracer import record_error
-from _logger import log_handler
-from _profiler import collect_profiling
+from ._meter import collect_metrics
+from ._tracer import record_error
+from ._logger import log_handler
+from ._profiler import collect_profiling
 
 mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 
