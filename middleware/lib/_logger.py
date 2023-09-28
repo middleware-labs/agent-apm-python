@@ -13,13 +13,15 @@ mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 
 
 def log_handler(project_name, service_name):
+    resource_json = {
+        "service.name": service_name,
+    }
+
+    if project_name is not None:
+        resource_json["project.name"] = project_name
+
     logger_provider = LoggerProvider(
-        resource=Resource.create(
-            {
-                "service.name": service_name,
-                'project.name': project_name
-            }
-        ),
+        resource=Resource.create(resource_json),
     )
     set_logger_provider(logger_provider)
     logger_provider.add_log_record_processor(BatchLogRecordProcessor(

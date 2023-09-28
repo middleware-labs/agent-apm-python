@@ -10,23 +10,17 @@ mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 
 
 class MwTracker:
-    def __init__(self, access_token=None):
-        pid = os.getpid()
+    def __init__(self):
 
-        resource_attributes = os.environ.get("OTEL_RESOURCE_ATTRIBUTES")
-        _service_name = os.environ.get("OTEL_SERVICE_NAME")
-        _project_name = self._get_project_name(resource_attributes)
+        # resource_attributes = os.environ.get("OTEL_RESOURCE_ATTRIBUTES")
+        # _service_name = os.environ.get("OTEL_SERVICE_NAME")
+        # _project_name = self._get_project_name(resource_attributes)
 
-        project_name = _project_name or f"Project-{pid}"
-        service_name = _service_name or f"Service-{pid}"
-        access_token = access_token or ""
-        # Set values in self
-        self.project_name = project_name
-        self.service_name = service_name
-        self.access_token = access_token
+        self.project_name = config.project_name
+        self.service_name = config.service_name
 
         if config.access_token:
-            self.access_token = config.access_token
+            self.access_token = config.access_token or ""
 
         if config.collect_metrics:
             self.collect_metrics()
@@ -58,11 +52,16 @@ class MwTracker:
     # For Utils
     def _set_custom_log_attr(self, *args, **kwargs):
         record = logging.LogRecord(*args, **kwargs)
-        record.__dict__.update({
-            "project.name": self.project_name,
+
+        update_json = {
             "service.name": self.service_name,
             "mw.app.lang": "python"
-        })
+        }
+
+        if self.project_name is not None:
+            update_json["project.name"] = self.project_name
+
+        record.__dict__.update(update_json)
         return record
 
     def _get_project_name(self, resource_attributes) -> str:
