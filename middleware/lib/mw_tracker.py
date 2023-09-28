@@ -4,6 +4,7 @@ from ._meter import collect_metrics
 from ._tracer import record_error
 from ._logger import log_handler
 from ._profiler import collect_profiling
+from middleware.config import config
 
 mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 
@@ -11,19 +12,7 @@ mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 class MwTracker:
     def __init__(self, access_token=None):
         pid = os.getpid()
-        os.environ["OTEL_TRACES_EXPORTER"] = "otlp"
-        os.environ["OTEL_METRICS_EXPORTER"] = "otlp"
-        os.environ["OTEL_LOGS_EXPORTER"] = "otlp"
 
-        # Way 1:
-        # project_name = project_name or f"Project-{pid}"
-        # service_name = service_name or f"Service-{pid}"
-        # access_token = access_token or ""
-
-        # os.environ["OTEL_SERVICE_NAME"] = service_name
-        # os.environ["OTEL_RESOURCE_ATTRIBUTES"] = f"project.name={project_name},mw.app.lang=python,runtime.metrics.python=true"
-
-        # Way 2:
         resource_attributes = os.environ.get("OTEL_RESOURCE_ATTRIBUTES")
         _service_name = os.environ.get("OTEL_SERVICE_NAME")
         _project_name = self._get_project_name(resource_attributes)
@@ -31,11 +20,22 @@ class MwTracker:
         project_name = _project_name or f"Project-{pid}"
         service_name = _service_name or f"Service-{pid}"
         access_token = access_token or ""
-
         # Set values in self
         self.project_name = project_name
         self.service_name = service_name
         self.access_token = access_token
+
+        if config.access_token:
+            self.access_token = config.access_token
+
+        if config.collect_metrics:
+            self.collect_metrics()
+
+        if config.collect_logs:
+            self.collect_logs()
+
+        if config.collect_profiling:
+            self.collect_profiling()
 
     # For Metrics
     def collect_metrics(self):
