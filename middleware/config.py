@@ -31,7 +31,9 @@ class Config:
         self.collect_profiling = self.get_config_boolean("middleware.common", "collect_profiling", False)
 
         project_name_attr = f"project.name={self.project_name}," if self.project_name else ""
-        self.exporter_otlp_endpoint = "http://localhost:9319"
+        source_service_url = self.get_config("middleware.common", "mw_agent_service", "http://localhost")
+
+        self.exporter_otlp_endpoint = f"{source_service_url}:9319"
         self.resource_attributes = f"{project_name_attr}mw.app.lang=python,runtime.metrics.python=true"
 
     def get_config(self, section, key, default):
