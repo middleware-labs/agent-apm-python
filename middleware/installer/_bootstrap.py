@@ -36,7 +36,6 @@ def _bootstrap():
     libraries = output.splitlines()
 
     for library in libraries:
-        # _pip_install(library)
         library_name, library_version = library.split("==", 1)
 
         try:
