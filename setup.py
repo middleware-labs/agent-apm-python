@@ -2,7 +2,7 @@ import sys
 import setuptools
 
 python_version = sys.version_info[:2]
-assert python_version >= (3,6,), "Middleware APM supports: Python 3.6+"
+assert python_version >= (3,8,), "Middleware APM supports: Python 3.8+"
 
 try:
     with open("requirements.txt", "r") as f:
@@ -19,7 +19,7 @@ packages = [
 
 setuptools.setup(
     name="middleware-apm",
-    version="0.2.2rc10",
+    version="0.2.2rc11",
     install_requires=requirements,
     author="middleware-dev",
     maintainer="middleware-dev",
@@ -28,7 +28,7 @@ setuptools.setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     packages=packages,
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     url = "https://docs.middleware.io/docs/apm-configuration/python",
     project_urls={"Source": "https://github.com/middleware-labs/agent-apm-python.git"},
     entry_points={

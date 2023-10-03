@@ -3,9 +3,11 @@ import os
 import threading
 import gc
 from sys import getswitchinterval
+from typing import NamedTuple
 
 from opentelemetry import metrics
 from opentelemetry.metrics import CallbackOptions, Observation
+
 # from opentelemetry.sdk.resources import Resource
 # from opentelemetry.sdk.metrics import MeterProvider
 # from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
@@ -13,6 +15,11 @@ from opentelemetry.metrics import CallbackOptions, Observation
 
 mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 
+class DiskUsageData(NamedTuple):
+    total: int
+    used: int
+    free: int
+    percent: float
 
 def collect_metrics() -> None:
     # metrics.set_meter_provider(MeterProvider(
@@ -153,7 +160,9 @@ def _cpu_time_callback(options: CallbackOptions):
     yield Observation(value=cpu_times.system, attributes={"state": "system"})
     yield Observation(value=cpu_times.children_user, attributes={"state": "children_user"})
     yield Observation(value=cpu_times.children_system, attributes={"state": "children_system"})
-    yield Observation(value=cpu_times.iowait, attributes={"state": "iowait"})
+
+    iowait_value = cpu_times.iowait if not psutil.WINDOWS else 0
+    yield Observation(value=iowait_value, attributes={"state": "iowait"})
 
 
 def _memory_rss_cb(options: CallbackOptions):
@@ -171,22 +180,25 @@ def _memory_vms_cb(options: CallbackOptions):
 
 
 def _memory_shared_cb(options: CallbackOptions):
+    shared_value = psutil.Process(os.getpid()).memory_info().shared if not psutil.WINDOWS else 0
     yield Observation(
-        value=psutil.Process(os.getpid()).memory_info().shared,
+        value=shared_value,
         attributes={"type": "shared"}
     )
 
 
 def _memory_text_cb(options: CallbackOptions):
+    text_value = psutil.Process(os.getpid()).memory_info().text if not psutil.WINDOWS else 0
     yield Observation(
-        value=psutil.Process(os.getpid()).memory_info().text,
+        value=text_value,
         attributes={"type": "text"}
     )
 
 
 def _memory_data_cb(options: CallbackOptions):
+    data_value = psutil.Process(os.getpid()).memory_info().data if not psutil.WINDOWS else 0
     yield Observation(
-        value=psutil.Process(os.getpid()).memory_info().data,
+        value=data_value,
         attributes={"type": "data"}
     )
 
@@ -196,7 +208,8 @@ def _num_threads_cb(options: CallbackOptions):
 
 
 def _num_fds_cb(options: CallbackOptions):
-    yield Observation(value=psutil.Process(os.getpid()).num_fds())
+    num_fds_value = psutil.Process(os.getpid()).num_fds() if not psutil.WINDOWS else 0
+    yield Observation(value=num_fds_value)
 
 
 def _num_vctx_switches_cb(options: CallbackOptions):
@@ -263,17 +276,37 @@ def _context_switch_cb(options: CallbackOptions):
     yield Observation(value=getswitchinterval())
 
 
+def __disk_usage_arr():
+    if not psutil.WINDOWS:
+        return psutil.disk_usage(os.sep)
+    else:
+        try:
+            return psutil.disk_usage(os.path.abspath(os.sep))
+        except Exception as e:
+            # Handle any exceptions that may occur
+            # print(f"Error: {e}")
+            return DiskUsageData(
+                total=0,
+                used=0,
+                free=0,
+                percent=0.0)
+
+
 def _disk_usage_percent_cb(options: CallbackOptions):
-    yield Observation(value=psutil.disk_usage(os.sep).percent)
+    arr_value = __disk_usage_arr()
+    yield Observation(value=arr_value.precent)
 
 
 def _disk_usage_total_cb(options: CallbackOptions):
-    yield Observation(value=psutil.disk_usage(os.sep).total, attributes={"type": "total"})
+    arr_value = __disk_usage_arr()
+    yield Observation(value=arr_value.total, attributes={"type": "total"})
 
 
 def _disk_usage_used_cb(options: CallbackOptions):
-    yield Observation(value=psutil.disk_usage(os.sep).used, attributes={"type": "used"})
+    arr_value = __disk_usage_arr()
+    yield Observation(value=arr_value.used, attributes={"type": "used"})
 
 
 def _disk_usage_free_cb(options: CallbackOptions):
-    yield Observation(value=psutil.disk_usage(os.sep).free, attributes={"type": "free"})
+    arr_value = __disk_usage_arr()
+    yield Observation(value=arr_value.free, attributes={"type": "free"})

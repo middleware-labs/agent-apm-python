@@ -1,9 +1,6 @@
 import os
+import psutil
 import logging
-from ._meter import collect_metrics
-from ._tracer import record_error
-from ._logger import log_handler
-from ._profiler import collect_profiling
 from middleware.config import config
 
 mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
@@ -28,25 +25,29 @@ class MwTracker:
         if config.collect_logs:
             self.collect_logs()
 
-        if config.collect_profiling:
+        if config.collect_profiling and not psutil.WINDOWS:
             self.collect_profiling()
 
     # For Metrics
     def collect_metrics(self):
+        from ._meter import collect_metrics
         collect_metrics()
 
     # For Profiling
     def collect_profiling(self) -> None:
+        from ._profiler import collect_profiling
         collect_profiling(self.service_name, self.access_token)
 
     # For Logging
     def collect_logs(self):
+        from ._logger import log_handler
         handler = log_handler(self.project_name, self.service_name)
         logging.getLogger().addHandler(handler)
         logging.setLogRecordFactory(self._set_custom_log_attr)
 
     # For Tracing
     def record_error(self, error):
+        from ._tracer import record_error
         record_error(error)
 
     # For Utils
