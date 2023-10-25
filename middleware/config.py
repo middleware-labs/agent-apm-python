@@ -29,6 +29,7 @@ class Config:
         self.collect_metrics = self.get_config_boolean("middleware.common", "collect_metrics", False)
         self.collect_logs = self.get_config_boolean("middleware.common", "collect_logs", False)
         self.collect_profiling = self.get_config_boolean("middleware.common", "collect_profiling", False)
+        self.otel_propagators = self.get_config("middleware.common", "otel_propagators", "b3")
 
         project_name_attr = f"project.name={self.project_name}," if self.project_name else ""
         source_service_url = self.get_config("middleware.common", "mw_agent_service", "http://localhost")

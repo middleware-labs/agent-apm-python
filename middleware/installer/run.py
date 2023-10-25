@@ -28,6 +28,7 @@ def run(args):
     --exporter_otlp_endpoint {config.exporter_otlp_endpoint} \
     --resource_attributes={config.resource_attributes} \
     --service_name {config.service_name} \
+    --propagators {config.otel_propagators} \
     {' '.join(args)}"
 
     # try:

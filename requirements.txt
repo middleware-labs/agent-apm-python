@@ -21,3 +21,8 @@ pyroscope-io==0.8.5; sys_platform != 'win32'
 psutil==5.9.5
 # webencodings==0.5.1
 # websocket-client==0.53.0
+opentelemetry-propagator-b3==1.20.0
+opentelemetry-propagator-jaeger==1.20.0
+opentelemetry-propagator-aws-xray==1.0.1
+opentelemetry-propagator-ot-trace==0.41b0
+opentelemetry-propagator-gcp==1.6.0
