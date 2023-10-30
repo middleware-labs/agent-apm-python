@@ -36,7 +36,7 @@ def run(args):
     # except subprocess.CalledProcessError as e:
     #     print(f"Failed bootstrapping with error: {e}")
 
-
+    print("cmd2=>", cmd2)
     _bootstrap()
 
     try:
