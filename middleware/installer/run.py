@@ -36,10 +36,10 @@ def run(args):
     # except subprocess.CalledProcessError as e:
     #     print(f"Failed bootstrapping with error: {e}")
 
-    print("cmd2=>", cmd2)
-    # _bootstrap()
+    print("cmd2.1=>", cmd2)
+    _bootstrap()
 
-    # try:
-    #     subprocess.run(cmd2, shell=True, check=True)
-    # except subprocess.CalledProcessError as e:
-    #     print(f"Failed instrumenting with error: {e}")
+    try:
+        subprocess.run(cmd2, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Failed instrumenting with error: {e}")
