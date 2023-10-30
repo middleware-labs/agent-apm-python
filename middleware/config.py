@@ -34,6 +34,10 @@ class Config:
         project_name_attr = f"project.name={self.project_name}," if self.project_name else ""
         source_service_url = self.get_config("middleware.common", "mw_agent_service", "http://localhost")
 
+        mw_agent_service = os.environ.get("MW_AGENT_SERVICE", None)
+        if mw_agent_service is not None and mw_agent_service != "":
+            source_service_url = mw_agent_service
+
         self.exporter_otlp_endpoint = f"{source_service_url}:9319"
         self.resource_attributes = f"{project_name_attr}mw.app.lang=python,runtime.metrics.python=true"
 
