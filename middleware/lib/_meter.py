@@ -294,7 +294,7 @@ def __disk_usage_arr():
 
 def _disk_usage_percent_cb(options: CallbackOptions):
     arr_value = __disk_usage_arr()
-    yield Observation(value=arr_value.precent)
+    yield Observation(value=arr_value.percent)
 
 
 def _disk_usage_total_cb(options: CallbackOptions):
