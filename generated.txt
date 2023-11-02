@@ -51,7 +51,7 @@ lazr.uri==1.0.3
 lockfile==0.12.2
 louis==3.12.0
 macaroonbakery==1.3.1
-Mako==1.1.0
+Mako==1.2.2
 MarkupSafe==1.1.0
 -e git+https://github.com/middleware-labs/agent-apm-python.git@ce2c0543dff90d4799f9c5eb6ce047e6584303a7#egg=middleware_apm
 monotonic==1.5
