@@ -1,4 +1,3 @@
-import os
 import subprocess
 from middleware.config import config
 from middleware.installer import command
@@ -23,13 +22,12 @@ def run(args):
     ]
 
     # cmd1 = "middleware-bootstrap -a install"
-    cmd2 = f"middleware-instrument \
-    {' '.join(exporters)} \
+    cmd2 = f"middleware-instrument {' '.join(exporters)} \
+    --tracer_provider sdk_tracer_provider \
     --exporter_otlp_endpoint {config.exporter_otlp_endpoint} \
     --resource_attributes={config.resource_attributes} \
     --service_name {config.service_name} \
-    --propagators {config.otel_propagators} \
-    {' '.join(args)}"
+    --propagators {config.otel_propagators} {' '.join(args)}"
 
     # try:
     #     subprocess.run(cmd1, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=True)
