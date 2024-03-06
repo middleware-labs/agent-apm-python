@@ -8,10 +8,7 @@ class Config:
         if len(sys.argv) > 1 and sys.argv[1] == "help":
             return
 
-        config_file = os.environ.get("MIDDLEWARE_CONFIG_FILE")
-        if not config_file:
-            exit_with_error("MIDDLEWARE_CONFIG_FILE environment variable is missing.")
-
+        config_file = os.environ.get("MIDDLEWARE_CONFIG_FILE", os.path.join(os.getcwd(), 'middleware.ini'))
         if not os.path.exists(config_file):
             exit_with_error(f"File not found: {config_file}")
 

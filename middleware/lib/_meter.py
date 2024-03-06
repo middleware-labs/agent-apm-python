@@ -36,7 +36,7 @@ def collect_metrics() -> None:
     #     ],
     # ))
     provider = metrics.get_meter_provider()
-    meter = provider.get_meter("middleware-apm", "0.4.0")
+    meter = provider.get_meter("middleware-apm", "0.4.1")
     _generate_metrics(meter)
 
 

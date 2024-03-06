@@ -27,6 +27,7 @@ class MwTracker:
         collect_metrics()
 
     def collect_traces(self):
+        os.environ['OTEL_PYTHON_TRACER_PROVIDER'] = 'sdk_tracer_provider'
         from ._tracer import collect_traces
         collect_traces()
 
