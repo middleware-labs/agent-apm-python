@@ -11,9 +11,6 @@ def collect_profiling(service_name, access_token="") -> None:
         # Setting Middleware Account Authentication URL
         auth_url = os.getenv('MW_AUTH_URL', 'https://app.middleware.io/api/v1/auth')
 
-        # Setting Middleware Profiling Server URL
-        profiling_server_url = os.getenv('MW_PROFILING_SERVER_URL', 'https://profiling.middleware.io')
-
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             # "Authorization": "Bearer " + c.accessToken
@@ -29,6 +26,11 @@ def collect_profiling(service_name, access_token="") -> None:
                 # Checking if a tenantID could be fetched from API Key
                 if data["success"]:
                     account = data["data"]["account"]
+                    
+                    # Setting Middleware Profiling Server URL
+                    default_profiling_server_url = f'https://{account}.middleware.io'
+                    profiling_server_url = os.getenv('MW_PROFILING_SERVER_URL', default_profiling_server_url)
+                    
                     pyroscope.configure(
                         application_name=service_name,  # replace this with some name for your application
                         server_address=profiling_server_url,
