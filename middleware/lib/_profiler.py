@@ -28,7 +28,7 @@ def collect_profiling(service_name, access_token="") -> None:
                     account = data["data"]["account"]
                     
                     # Setting Middleware Profiling Server URL
-                    default_profiling_server_url = f'https://{account}.middleware.io'
+                    default_profiling_server_url = f'https://{account}.middleware.io/profiling'
                     profiling_server_url = os.getenv('MW_PROFILING_SERVER_URL', default_profiling_server_url)
                     
                     pyroscope.configure(
