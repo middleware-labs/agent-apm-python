@@ -8,3 +8,4 @@ instrumentation_env
 test_env
 .idea
 \apmpythonpackage
+venv
