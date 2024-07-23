@@ -37,6 +37,20 @@ class Config:
 
         self.exporter_otlp_endpoint = f"http://{source_service_url}:9319"
         self.resource_attributes = f"{project_name_attr}mw.app.lang=python,runtime.metrics.python=true"
+        
+        # Allowing users to override full OTLP endpoint
+        exporter_otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", None)
+        if exporter_otlp_endpoint is not None and exporter_otlp_endpoint != "":
+            self.exporter_otlp_endpoint = exporter_otlp_endpoint
+        
+        # Allowing users to pass Middleware API Key via ENV variable
+        mw_api_key = os.environ.get("MW_API_KEY", None)
+        if mw_api_key is not None and mw_api_key != "":
+            self.access_token = mw_api_key
+        
+        # Passing Middleware API Key as a resource attribute, to validate ingestion requests in serverless setup
+        if self.access_token is not None and self.access_token != "":
+            self.resource_attributes = f"{self.resource_attributes},mw.account_key={self.access_token}"
 
     def get_config(self, section, key, default):
         return self.config.get(section, key, fallback=default)
