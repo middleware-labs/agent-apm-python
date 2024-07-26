@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: test keval",
+      "type": "python",
+      "request": "launch",
+      "module": "unittest",
+      "args": [
+        "discover",
+        "-s",
+        "${workspaceFolder}/middleware",
+        "-p",
+        "config_test.py"
+      ],
+      "cwd": "${workspaceFolder}/middleware",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/middleware:${PYTHONPATH}",
+        "MIDDLEWARE_CONFIG_FILE": "/home/keval/codebase/middleware-labs/agent-apm-python/middleware/testfiles/middleware_default.ini"
+      }
+    }
+  ]
+}
