@@ -4,8 +4,10 @@
 instrumentation_env
 \source\middleware-apm
 \source\__pycache__
+**/__pycache__
 \source\apmpython.pyc
 test_env
 .idea
 \apmpythonpackage
 venv
+.vscode

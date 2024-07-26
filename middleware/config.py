@@ -4,9 +4,69 @@ import configparser
 
 
 class Config:
-    def __init__(self):
+    def get_config(self, section, key, default):
+        # Allowing OTEL level overrides at top priority
+        if key in self.otel_config_binding:
+            otel_env_value = os.environ.get(self.otel_config_binding[key], None)
+            if otel_env_value is not None and otel_env_value != "":
+                return otel_env_value
+        
+        # Allowing MW level ENV overrides
+        if key in self.config_binding:
+            env_value = os.environ.get(self.config_binding[key], None)
+            if env_value is not None and env_value != "":
+                return env_value
+        
+        return self.config.get(section, key, fallback=default)
+
+    def str_to_bool(self, value, default):
+        if isinstance(value, str):
+            value = value.strip().lower()
+            if value in {"true", "1", "yes", "y"}:
+                return True
+            elif value in {"false", "0", "no", "n"}:
+                return False
+        return default  # Default value if the string cannot be converted
+
+    def get_config_boolean(self, section, key, default):
+        # Allowing OTEL level overrides at top priority
+        if key in self.otel_config_binding:
+            otel_env_value = os.environ.get(self.otel_config_binding[key], None)
+            if otel_env_value is not None and otel_env_value != "":
+                return self.str_to_bool(otel_env_value, default)
+        
+        # Allowing MW level ENV overrides
+        if key in self.config_binding:
+            env_value = os.environ.get(self.config_binding[key], None)
+            if env_value is not None and env_value != "":
+                return self.str_to_bool(env_value, default)
+        
+        return self.config.getboolean(section, key, fallback=default)
+    
+    def __init__(self):       
         if len(sys.argv) > 1 and sys.argv[1] == "help":
             return
+        
+        self.config_binding = {
+            "project_name": "MW_PROJECT_NAME",
+            "service_name": "MW_SERVICE_NAME",
+            "access_token": "MW_API_KEY",
+            "collect_traces": "MW_APM_COLLECT_TRACES",
+            "collect_metrics": "MW_APM_COLLECT_METRICS",
+            "collect_logs": "MW_APM_COLLECT_LOGS",
+            "collect_profiling": "MW_APM_COLLECT_PROFILING",
+            "otel_propagators": "MW_PROPAGATORS",
+            "mw_agent_service": "MW_AGENT_SERVICE",
+            "target": "MW_TARGET",
+            "custom_resource_attributes": "MW_CUSTOM_RESOURCE_ATTRIBUTES",
+            "log_level": "MW_LOG_LEVEL",
+        }
+        
+        self.otel_config_binding = {
+            "service_name": "OTEL_SERVICE_NAME",
+            "otel_propagators": "OTEL_PROPAGATORS",
+            "target": "OTEL_EXPORTER_OTLP_ENDPOINT"
+        }
 
         config_file = os.environ.get("MIDDLEWARE_CONFIG_FILE", os.path.join(os.getcwd(), 'middleware.ini'))
         if not os.path.exists(config_file):
@@ -21,48 +81,43 @@ class Config:
         pid = os.getpid()
         self.project_name = self.get_config("middleware.common", "project_name", None)
         self.service_name = self.get_config("middleware.common", "service_name", f"Service-{pid}")
+        self.mw_agent_service = self.get_config("middleware.common", "mw_agent_service", "localhost")
+        self.target = self.get_config("middleware.common", "target", "")
         self.access_token = self.get_config("middleware.common", "access_token", "")
         self.collect_traces = self.get_config_boolean("middleware.common", "collect_traces", True)
         self.collect_metrics = self.get_config_boolean("middleware.common", "collect_metrics", False)
         self.collect_logs = self.get_config_boolean("middleware.common", "collect_logs", False)
         self.collect_profiling = self.get_config_boolean("middleware.common", "collect_profiling", False)
         self.otel_propagators = self.get_config("middleware.common", "otel_propagators", "b3")
+        self.custom_resource_attributes = self.get_config("middleware.common", "custom_resource_attributes", "")
+        self.log_level = self.get_config("middleware.common", "log_level", "FATAL")
 
-        project_name_attr = f"project.name={self.project_name}," if self.project_name else ""
-        source_service_url = self.get_config("middleware.common", "mw_agent_service", "localhost")
-
-        mw_agent_service = os.environ.get("MW_AGENT_SERVICE", None)
-        if mw_agent_service is not None and mw_agent_service != "":
-            source_service_url = mw_agent_service
-
-        self.exporter_otlp_endpoint = f"http://{source_service_url}:9319"
-        self.resource_attributes = f"{project_name_attr}mw.app.lang=python,runtime.metrics.python=true"
+        # target will have more priority over mw_agent_service
+        self.exporter_otlp_endpoint = f"http://{self.mw_agent_service}:9319"
+        if self.target is not None and self.target != "": 
+            self.exporter_otlp_endpoint = self.target
         
-        # Allowing users to override full OTLP endpoint 
-        # Priority OTEL_EXPORTER_OTLP_ENDPOINT > MW_TARGET
-        mw_target = os.environ.get("MW_TARGET", None)
-        if mw_target is not None and mw_target != "":
-            self.exporter_otlp_endpoint = mw_target
+        
+        self.resource_attributes = "mw.app.lang=python,runtime.metrics.python=true"
             
-        exporter_otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", None)
-        if exporter_otlp_endpoint is not None and exporter_otlp_endpoint != "":
-            self.exporter_otlp_endpoint = exporter_otlp_endpoint
-        
-        # Allowing users to pass Middleware API Key via ENV variable
-        mw_api_key = os.environ.get("MW_API_KEY", None)
-        if mw_api_key is not None and mw_api_key != "":
-            self.access_token = mw_api_key
+        # Add `mw_serverless` resource attribute if target is not "localhost"
+        if "localhost" not in self.exporter_otlp_endpoint and "127.0.0.1" not in self.exporter_otlp_endpoint:
+             self.resource_attributes = f"{self.resource_attributes},mw_serverless=true" 
+            
+        # Passing Project name as a resource attribute
+        if self.project_name is not None and self.project_name != "":
+            self.resource_attributes = f"{self.resource_attributes},project.name={self.project_name}"
         
         # Passing Middleware API Key as a resource attribute, to validate ingestion requests in serverless setup
         if self.access_token is not None and self.access_token != "":
             self.resource_attributes = f"{self.resource_attributes},mw.account_key={self.access_token}"
-
-    def get_config(self, section, key, default):
-        return self.config.get(section, key, fallback=default)
-
-    def get_config_boolean(self, section, key, default):
-        return self.config.getboolean(section, key, fallback=default)
-
+            
+        # Appending Custom Resource Attributes, if any
+        if self.custom_resource_attributes is not None and self.custom_resource_attributes != "":
+            self.resource_attributes = f"{self.resource_attributes},{self.custom_resource_attributes}"
+            
+        
+        
 
 def exit_with_error(message):
     print(message)
