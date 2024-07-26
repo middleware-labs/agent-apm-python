@@ -19,7 +19,7 @@ packages = [
 
 setuptools.setup(
     name="middleware-apm",
-    version="1.0.0",
+    version="1.1.0",
     install_requires=requirements,
     author="middleware-dev",
     maintainer="middleware-dev",
