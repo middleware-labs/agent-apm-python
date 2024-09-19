@@ -68,7 +68,8 @@ class Config:
             "custom_resource_attributes": "MW_CUSTOM_RESOURCE_ATTRIBUTES",
             "log_level": "MW_LOG_LEVEL",
             "console_exporter": "MW_CONSOLE_EXPORTER",
-            "disable_info":"MW_DISABLE_INFO"
+            "disable_info":"MW_DISABLE_INFO",
+            "debug_log_file":"MW_DEBUG_LOG_FILE"
         }
 
         self.otel_config_binding = {
@@ -120,6 +121,9 @@ class Config:
         self.log_level = self.get_config("middleware.common", "log_level", "INFO")
         self.console_exporter = self.get_config_boolean(
             "middleware.common", "console_exporter", False
+        )
+        self.debug_log_file = self.get_config_boolean(
+            "middleware.common", "debug_log_file", False
         )
         self.disable_info = self.get_config_boolean(
             "middleware.common", "disable_info", False

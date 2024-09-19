@@ -1,6 +1,6 @@
 import logging
 import grpc
-
+import sys
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
     OTLPLogExporter,
@@ -25,9 +25,13 @@ def log_handler():
     )
 
     if config.console_exporter:
+        output= sys.stdout    
+        if config.debug_log_file:
+            output=open("mw-logs.log", "w")
         logger_provider.add_log_record_processor(
-            SimpleLogRecordProcessor(ConsoleLogExporter(out=open("mw-logs.log", "w")))
+            SimpleLogRecordProcessor(ConsoleLogExporter(out=output))
         )
+
 
     root_logger = logging.getLogger()
     stream_handler = logging.StreamHandler()

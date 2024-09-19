@@ -1,4 +1,5 @@
 import grpc
+import sys
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -18,8 +19,11 @@ def collect_traces():
         )
     )
     if config.console_exporter:
+        output= sys.stdout    
+        if config.debug_log_file:
+            output=open("mw-traces.log", "w")
         provider.add_span_processor(
-            SimpleSpanProcessor(ConsoleSpanExporter(out=open("mw-traces.log", "w")))
+            SimpleSpanProcessor(ConsoleSpanExporter(out=output))
         )
 
 

@@ -3,6 +3,7 @@ import os
 import threading
 import gc
 import grpc
+import sys
 from sys import getswitchinterval
 from typing import NamedTuple
 from opentelemetry import metrics
@@ -31,8 +32,11 @@ def collect_metrics() -> None:
     )
     readers = [PeriodicExportingMetricReader(exporter)]
     if config.console_exporter:
+        output= sys.stdout    
+        if config.debug_log_file:
+            output=open("mw-metrics.log", "w")
         console_reader = PeriodicExportingMetricReader(
-            ConsoleMetricExporter(out=open("mw-metrics.log", "w"))
+            ConsoleMetricExporter(out=output)
         )
         readers.append(console_reader)
     provider = MeterProvider(metric_readers=readers)
