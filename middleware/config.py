@@ -129,7 +129,7 @@ class Config:
             "middleware.common", "disable_info", False
         )
 
-        self.resource_attributes = f"mw.app.lang=python,runtime.metrics.python=true,mw.apm.version={SDK_VERSION},python.version={PYTHON_VERSION}"
+        self.resource_attributes = f"mw.app.lang=python,runtime.metrics.python=true,mw.sdk.version={SDK_VERSION},python.version={PYTHON_VERSION}"
 
         if self.mw_agent_service != "":
             self.exporter_otlp_endpoint = f"http://{self.mw_agent_service}:9319"
