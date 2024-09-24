@@ -91,7 +91,7 @@ class Config:
             exit_with_error(f"Error reading configuration file: {e}")
 
         pid = os.getpid()
-        self.project_name = self.get_config("middleware.common", "project_name", None)
+        self.project_name = self.get_config("middleware.common", "project_name", "")
         self.service_name = self.get_config(
             "middleware.common", "service_name", f"Service-{pid}"
         )
