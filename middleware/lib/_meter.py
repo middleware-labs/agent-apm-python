@@ -2,18 +2,21 @@ import psutil
 import os
 import threading
 import gc
+import grpc
+import sys
 from sys import getswitchinterval
 from typing import NamedTuple
-
 from opentelemetry import metrics
 from opentelemetry.metrics import CallbackOptions, Observation
 
-# from opentelemetry.sdk.resources import Resource
-# from opentelemetry.sdk.metrics import MeterProvider
-# from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-# from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics.export import (
+    PeriodicExportingMetricReader,
+    ConsoleMetricExporter,
+)
+from middleware.config import config
 
-mw_agent_target = os.environ.get('MW_AGENT_SERVICE', '127.0.0.1')
 
 class DiskUsageData(NamedTuple):
     total: int
@@ -21,22 +24,26 @@ class DiskUsageData(NamedTuple):
     free: int
     percent: float
 
+
 def collect_metrics() -> None:
-    # metrics.set_meter_provider(MeterProvider(
-    #     resource=Resource.create({
-    #         "service.name": service_name,
-    #         "project.name": project_name,
-    #         "mw.app.lang": "python",
-    #         "runtime.metrics.python": "true"
-    #     }),
-    #     metric_readers=[
-    #         PeriodicExportingMetricReader(
-    #             OTLPMetricExporter(insecure=True, endpoint=mw_agent_target + ":9319")
-    #         )
-    #     ],
-    # ))
-    provider = metrics.get_meter_provider()
-    meter = provider.get_meter("middleware-apm", "0.4.1")
+    exporter = OTLPMetricExporter(
+        timeout=5,
+        compression=grpc.Compression.Gzip,
+    )
+    readers = [PeriodicExportingMetricReader(exporter)]
+    if config.console_exporter:
+        output= sys.stdout    
+        if config.debug_log_file:
+            output=open("mw-metrics.log", "w")
+        console_reader = PeriodicExportingMetricReader(
+            ConsoleMetricExporter(out=output)
+        )
+        readers.append(console_reader)
+    provider = MeterProvider(metric_readers=readers)
+    if metrics.get_meter_provider() is None:
+        metrics.set_meter_provider(provider)
+    # metrics.set_meter_provider(provider)
+    meter = provider.get_meter("sdk_meter_provider")
     _generate_metrics(meter)
 
 
@@ -45,103 +52,109 @@ def _generate_metrics(meter):
         "process.cpu_usage.percentage",
         unit="Percent",
         callbacks=[_cpu_usage_cb],
-        description="The will show the cpu usage of the process"
+        description="The will show the cpu usage of the process",
     )
     meter.create_observable_gauge(
         "process.memory_usage.percentage",
         unit="Percent",
         callbacks=[_ram_usage_cb],
-        description="The will show the memory usage of the process"
+        description="The will show the memory usage of the process",
     )
     meter.create_observable_counter(
         "process.cpu.time",
         callbacks=[_cpu_time_callback],
         unit="s",
-        description="This will show the cpu time of the process"
+        description="This will show the cpu time of the process",
     )
     meter.create_observable_gauge(
         "process.memory.bytes",
         unit="Bytes",
-        callbacks=[_memory_rss_cb, _memory_vms_cb, _memory_shared_cb, _memory_text_cb, _memory_data_cb],
-        description="The will show the memory rss, vms, shared, text and data of the process"
+        callbacks=[
+            _memory_rss_cb,
+            _memory_vms_cb,
+            _memory_shared_cb,
+            _memory_text_cb,
+            _memory_data_cb,
+        ],
+        description="The will show the memory rss, vms, shared, text and data of the process",
     )
     meter.create_observable_gauge(
         "process.num_threads.count",
         unit="Count",
         callbacks=[_num_threads_cb],
-        description="The will show the number of threads of the process"
+        description="The will show the number of threads of the process",
     )
     meter.create_observable_gauge(
         "process.num_fds.count",
         unit="Count",
         callbacks=[_num_fds_cb],
-        description="The will show the number of fds of the process"
+        description="The will show the number of fds of the process",
     )
     meter.create_observable_gauge(
         "process.ctx_switches.count",
         unit="Count",
         callbacks=[_num_vctx_switches_cb, _num_ivctx_switches_cb],
-        description="The will show the number of ctx switches of the process"
+        description="The will show the number of ctx switches of the process",
     )
     meter.create_observable_gauge(
         "process.num_connections.count",
         unit="Count",
         callbacks=[_num_connections_cb],
-        description="The will show the number of connections of the process"
+        description="The will show the number of connections of the process",
     )
     meter.create_observable_gauge(
         "process.io_counters.bytes",
         unit="Bytes",
         callbacks=[_io_read_bytes_cb, _io_write_bytes_cb],
-        description="This will show the io read and write bytes of the process"
+        description="This will show the io read and write bytes of the process",
     )
     meter.create_observable_gauge(
         "process.cpu_affinity.count",
         unit="Count",
         callbacks=[_cpu_affinity_cb],
-        description="The will show the cpu affinity of the process"
+        description="The will show the cpu affinity of the process",
     )
     meter.create_observable_gauge(
         "process.create_time.timestamp",
         unit="s",
         callbacks=[_create_time_cb],
-        description="The will show the create time of the process"
+        description="The will show the create time of the process",
     )
     meter.create_observable_gauge(
         "process.open_files.count",
         unit="Count",
         callbacks=[_open_file_counts_cb],
-        description="The will show the open files of the process"
+        description="The will show the open files of the process",
     )
     meter.create_observable_gauge(
         "process.threads.count",
         unit="Count",
         callbacks=[_thread_counts_cb],
-        description="The will show the threads of the process"
+        description="The will show the threads of the process",
     )
     meter.create_observable_gauge(
         "process.gc.count",
         unit="Count",
         callbacks=[_gc0_cb, _gc1_cb, _gc2_cb],
-        description="The will show the gc of the process"
+        description="The will show the gc of the process",
     )
     meter.create_observable_gauge(
         "process.context_switches.count",
         unit="Count",
         callbacks=[_context_switch_cb],
-        description="The will show the context switches of the process"
+        description="The will show the context switches of the process",
     )
     meter.create_observable_gauge(
         "process.disk_usage.percentage",
         unit="Percent",
         callbacks=[_disk_usage_percent_cb],
-        description="The will show the disk usage percentage of the process"
+        description="The will show the disk usage percentage of the process",
     )
     meter.create_observable_gauge(
         "process.disk_usage.bytes",
         unit="Bytes",
         callbacks=[_disk_usage_total_cb, _disk_usage_used_cb, _disk_usage_free_cb],
-        description="The will show the disk usage of the process"
+        description="The will show the disk usage of the process",
     )
 
 
@@ -158,8 +171,12 @@ def _cpu_time_callback(options: CallbackOptions):
     cpu_times = psutil.Process(os.getpid()).cpu_times()
     yield Observation(value=cpu_times.user, attributes={"state": "user"})
     yield Observation(value=cpu_times.system, attributes={"state": "system"})
-    yield Observation(value=cpu_times.children_user, attributes={"state": "children_user"})
-    yield Observation(value=cpu_times.children_system, attributes={"state": "children_system"})
+    yield Observation(
+        value=cpu_times.children_user, attributes={"state": "children_user"}
+    )
+    yield Observation(
+        value=cpu_times.children_system, attributes={"state": "children_system"}
+    )
 
     iowait_value = cpu_times.iowait if not psutil.WINDOWS else 0
     yield Observation(value=iowait_value, attributes={"state": "iowait"})
@@ -167,40 +184,35 @@ def _cpu_time_callback(options: CallbackOptions):
 
 def _memory_rss_cb(options: CallbackOptions):
     yield Observation(
-        value=psutil.Process(os.getpid()).memory_info().rss,
-        attributes={"type": "rss"}
+        value=psutil.Process(os.getpid()).memory_info().rss, attributes={"type": "rss"}
     )
 
 
 def _memory_vms_cb(options: CallbackOptions):
     yield Observation(
-        value=psutil.Process(os.getpid()).memory_info().vms,
-        attributes={"type": "vms"}
+        value=psutil.Process(os.getpid()).memory_info().vms, attributes={"type": "vms"}
     )
 
 
 def _memory_shared_cb(options: CallbackOptions):
-    shared_value = psutil.Process(os.getpid()).memory_info().shared if not psutil.WINDOWS else 0
-    yield Observation(
-        value=shared_value,
-        attributes={"type": "shared"}
+    shared_value = (
+        psutil.Process(os.getpid()).memory_info().shared if not psutil.WINDOWS else 0
     )
+    yield Observation(value=shared_value, attributes={"type": "shared"})
 
 
 def _memory_text_cb(options: CallbackOptions):
-    text_value = psutil.Process(os.getpid()).memory_info().text if not psutil.WINDOWS else 0
-    yield Observation(
-        value=text_value,
-        attributes={"type": "text"}
+    text_value = (
+        psutil.Process(os.getpid()).memory_info().text if not psutil.WINDOWS else 0
     )
+    yield Observation(value=text_value, attributes={"type": "text"})
 
 
 def _memory_data_cb(options: CallbackOptions):
-    data_value = psutil.Process(os.getpid()).memory_info().data if not psutil.WINDOWS else 0
-    yield Observation(
-        value=data_value,
-        attributes={"type": "data"}
+    data_value = (
+        psutil.Process(os.getpid()).memory_info().data if not psutil.WINDOWS else 0
     )
+    yield Observation(value=data_value, attributes={"type": "data"})
 
 
 def _num_threads_cb(options: CallbackOptions):
@@ -215,14 +227,14 @@ def _num_fds_cb(options: CallbackOptions):
 def _num_vctx_switches_cb(options: CallbackOptions):
     yield Observation(
         value=psutil.Process(os.getpid()).num_ctx_switches().voluntary,
-        attributes={"type": "voluntary"}
+        attributes={"type": "voluntary"},
     )
 
 
 def _num_ivctx_switches_cb(options: CallbackOptions):
     yield Observation(
         value=psutil.Process(os.getpid()).num_ctx_switches().involuntary,
-        attributes={"type": "involuntary"}
+        attributes={"type": "involuntary"},
     )
 
 
@@ -233,14 +245,14 @@ def _num_connections_cb(options: CallbackOptions):
 def _io_read_bytes_cb(options: CallbackOptions):
     yield Observation(
         value=psutil.Process(os.getpid()).io_counters().read_bytes,
-        attributes={"direction": "read"}
+        attributes={"direction": "read"},
     )
 
 
 def _io_write_bytes_cb(options: CallbackOptions):
     yield Observation(
         value=psutil.Process(os.getpid()).io_counters().write_bytes,
-        attributes={"direction": "write"}
+        attributes={"direction": "write"},
     )
 
 
@@ -285,11 +297,7 @@ def __disk_usage_arr():
         except Exception as e:
             # Handle any exceptions that may occur
             # print(f"Error: {e}")
-            return DiskUsageData(
-                total=0,
-                used=0,
-                free=0,
-                percent=0.0)
+            return DiskUsageData(total=0, used=0, free=0, percent=0.0)
 
 
 def _disk_usage_percent_cb(options: CallbackOptions):

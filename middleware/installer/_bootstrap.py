@@ -30,7 +30,7 @@ def _bootstrap():
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
         output = result.stdout
     except subprocess.CalledProcessError as e:
-        print(f"Error running middleware-bootstrap: {e}")
+        print(f"Error running init middleware-bootstrap: {e}")
         output = ""
 
     libraries = output.splitlines()
