@@ -27,7 +27,7 @@ def collect_profiling() -> None:
 
                 # Checking if a tenantID could be fetched from API Key
                 if data["success"]:
-                    account = data["data"]["account"]
+                    account = data["data"]["project_uid"]
                     
                     # Setting Middleware Profiling Server URL
                     default_profiling_server_url = f'https://{account}.middleware.io/profiling'
