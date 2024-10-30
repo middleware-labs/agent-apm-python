@@ -4,14 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "middleware-apm"
-version = "1.2.4rc6"
+version = "1.2.4rc7"
 requires-python = ">=3.8"
 description = "Middleware's APM tool enables Python developers to effortlessly monitor their applications, gathering distributed tracing, metrics, logs, and profiling data for valuable insights and performance optimization."
 authors = [{ name = "middleware-dev" }]
 maintainers = [{ name = "middleware-dev" }]
 readme = "README.md"
 license = { text = "Apache-2.0" }
-keywords = ["APM", "middleware", "monitoring", "tracing", "metrics", "logs"]
+keywords = [
+    "APM",
+    "middleware",
+    "monitoring",
+    "tracing",
+    "metrics",
+    "logs",
+]
 dependencies =[
     "distro==1.9.0",
     "opentelemetry-api==1.27.0",
@@ -45,3 +52,9 @@ middleware_distro = "middleware.distro:MiddlewareDistro"
 [project.scripts]
 middleware-run = "opentelemetry.instrumentation.auto_instrumentation:run"
 middleware-bootstrap = "opentelemetry.instrumentation.bootstrap:run"
+
+[tool.pylint.format]
+max-line-length = "88"
+
+[tool.isort]
+profile = "black"

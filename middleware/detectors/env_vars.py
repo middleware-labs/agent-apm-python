@@ -1,7 +1,8 @@
 import os
-from opentelemetry.sdk.resources import Resource,ResourceDetector
+from opentelemetry.sdk.resources import Resource, ResourceDetector
 
 ENV_ATTR_NAME = "process.environ"
+
 
 class EnvVarsDetector(ResourceDetector):
     def detect(self) -> "Resource":

@@ -81,6 +81,7 @@ log_levels = {
 
 _logger = logging.getLogger(__name__)
 
+
 # pylint: disable=too-many-arguments,too-many-instance-attributes
 class MWOptions:
     """
@@ -127,10 +128,10 @@ class MWOptions:
     - `mw_agent_service (str)`: Address of the middleware agent service.
       - Environment Variable: `MW_AGENT_SERVICE` (default: "localhost").
       - Use for containerized app with agent installed.
-      - Example usage: 
+      - Example usage:
         (Docker)
                 mw_agent_service = 172.17.0.1
-        (Kubernetes)        
+        (Kubernetes)
                 mw_agent_service = mw-service.mw-agent-ns.svc.cluster.local
 
     - `target (str)`: Target endpoint for the OTLP exporter.
@@ -168,9 +169,9 @@ class MWOptions:
 
     - `sample_rate (int)`: Sample rate for telemetry data.
       - Environment Variable: `MW_SAMPLE_RATE`.
-      - Should be the value from `0` to `1`. 
+      - Should be the value from `0` to `1`.
         AlwaysOn (1), AlwaysOff (0), or a TraceIdRatio as 1/N
-      - To use OTEL Sampler use ENVs and avoid this sample_rate.  
+      - To use OTEL Sampler use ENVs and avoid this sample_rate.
       - Example usage:
                 sample_rate = 0.5
 
@@ -274,8 +275,6 @@ class MWOptions:
         self.detectors = os.environ.get(MW_DETECTORS, detectors)
 
 
-
-
 def parse_bool(
     environment_variable: str, default_value: bool, error_message: str = None
 ) -> bool:
@@ -333,4 +332,3 @@ def parse_int(
         return param
     else:
         return default_value
-

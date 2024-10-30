@@ -6,7 +6,7 @@ from opentelemetry.sdk.trace.sampling import (
     ALWAYS_ON,
     TraceIdRatioBased,
     Sampler,
-    SamplingResult
+    SamplingResult,
 )
 
 from opentelemetry.trace import Link, SpanKind
@@ -14,10 +14,7 @@ from opentelemetry.trace.span import TraceState
 from opentelemetry.util.types import Attributes
 from opentelemetry.context import Context
 
-from middleware.options import (
-    DEFAULT_SAMPLE_RATE,
-    MWOptions
-)
+from middleware.options import DEFAULT_SAMPLE_RATE, MWOptions
 
 _logger = getLogger(__name__)
 
@@ -85,23 +82,17 @@ class DeterministicSampler(Sampler):
         kind: SpanKind = None,
         attributes: Attributes = None,
         links: Link = None,
-        trace_state: "TraceState" = None
+        trace_state: "TraceState" = None,
     ) -> "SamplingResult":
         # append our SampleRate field to attributes
-        sample_rate = {'SampleRate': self.rate}
+        sample_rate = {"SampleRate": self.rate}
         if attributes is None:
             attributes = sample_rate
         else:
             attributes.update(sample_rate)
         # using _sampler logic based on rate (OFF, ON, TraceIdRatio)
         return self._sampler.should_sample(
-            parent_context,
-            trace_id,
-            name,
-            kind,
-            attributes,
-            links,
-            trace_state
+            parent_context, trace_id, name, kind, attributes, links, trace_state
         )
 
     def get_description(self) -> str:

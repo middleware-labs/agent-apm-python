@@ -12,15 +12,12 @@ from opentelemetry.sdk._logs.export import (
     ConsoleLogExporter,
 )
 from opentelemetry._logs import set_logger_provider
-from middleware.options import MWOptions,log_levels
+from middleware.options import MWOptions, log_levels
 
 _logger = logging.getLogger(__name__)
 
 
-def create_logger_handler(
-    options: MWOptions,
-    resource: Resource
-) -> LoggingHandler:
+def create_logger_handler(options: MWOptions, resource: Resource) -> LoggingHandler:
     """
     Configures and returns a new LoggerProvider to send logs telemetry.
 
@@ -35,27 +32,18 @@ def create_logger_handler(
         endpoint=options.target,
         compression=grpc.Compression.Gzip,
     )
-    logger_provider = LoggerProvider(
-        resource=resource,
-        shutdown_on_exit=True
-    )
-    logger_provider.add_log_record_processor(
-        BatchLogRecordProcessor(
-            exporter
-        )
-    )
+    logger_provider = LoggerProvider(resource=resource, shutdown_on_exit=True)
+    logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
     if options.console_exporter:
         if options.console_exporter:
-            output = sys.stdout 
+            output = sys.stdout
             if options.debug_log_file:
                 log_file = "mw-logs"
                 try:
                     output = open(log_file, "w")
                 except Exception:
-                    _logger.error(
-                        f"Cannot open the log file for writing: {log_file}"
-                    )
-                    output = sys.stdout 
+                    _logger.error(f"Cannot open the log file for writing: {log_file}")
+                    output = sys.stdout
         logger_provider.add_log_record_processor(
             SimpleLogRecordProcessor(
                 ConsoleLogExporter(
@@ -64,8 +52,9 @@ def create_logger_handler(
             )
         )
 
-    handler = LoggingHandler(level=log_levels[options.log_level], logger_provider=logger_provider)
+    handler = LoggingHandler(
+        level=log_levels[options.log_level], logger_provider=logger_provider
+    )
     set_logger_provider(logger_provider)
 
     return handler
-

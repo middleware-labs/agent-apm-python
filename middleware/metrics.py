@@ -13,14 +13,13 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.metrics import MeterProvider, Meter
 from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,
-    ConsoleMetricExporter
+    ConsoleMetricExporter,
 )
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
-    OTLPMetricExporter
-)
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 from middleware.options import MWOptions
 
 _logger = logging.getLogger(__name__)
+
 
 def create_meter_provider(options: MWOptions, resource: Resource):
     """
@@ -38,22 +37,16 @@ def create_meter_provider(options: MWOptions, resource: Resource):
         endpoint=options.target,
         compression=grpc.Compression.Gzip,
     )
-    readers = [
-        PeriodicExportingMetricReader(
-            exporter
-        )
-    ]
+    readers = [PeriodicExportingMetricReader(exporter)]
     if options.console_exporter:
-        output = sys.stdout 
+        output = sys.stdout
         if options.debug_log_file:
             log_file = "mw-metrics"
             try:
                 output = open(log_file, "w")
             except Exception:
-                _logger.error(
-                    f"Cannot open the log file for writing: {log_file}"
-                )
-                output = sys.stdout 
+                _logger.error(f"Cannot open the log file for writing: {log_file}")
+                output = sys.stdout
         readers.append(
             PeriodicExportingMetricReader(
                 ConsoleMetricExporter(
@@ -62,15 +55,12 @@ def create_meter_provider(options: MWOptions, resource: Resource):
             )
         )
 
-    provider = MeterProvider(
-        metric_readers=readers,
-        resource=resource
-    )
+    provider = MeterProvider(metric_readers=readers, resource=resource)
 
     meter = provider.get_meter("sdk_meter_provider")
     _generate_metrics(meter)
 
-    set_meter_provider(meter_provider=provider)   
+    set_meter_provider(meter_provider=provider)
 
     return provider
 
@@ -80,6 +70,7 @@ class DiskUsageData(NamedTuple):
     used: int
     free: int
     percent: float
+
 
 def _generate_metrics(meter: Meter):
     meter.create_observable_gauge(
