@@ -60,6 +60,7 @@ class MwTracker:
     def django_instrument(self):
         if config.collect_traces:
             from opentelemetry.instrumentation.django import DjangoInstrumentor
+
             DjangoInstrumentor().instrument()
 
     def _set_custom_log_attr(self, *args, **kwargs):
@@ -82,7 +83,7 @@ class MwTracker:
         return project_name
 
     def _health_check(self):
-        if config.target == "" or ("https" not in config.target) :
+        if config.target == "" or ("https" not in config.target):
             try:
                 response = requests.get(
                     f"http://{config.mw_agent_service}:13133/healthcheck", timeout=5
@@ -92,7 +93,9 @@ class MwTracker:
                         f"[{yellow_color}WARN{reset_color}]: MW Agent Health Check is failing ...\nThis could be due to incorrect value of MW_AGENT_SERVICE\nIgnore the warning if you are using MW Agent older than 1.7.7 (You can confirm by running `mw-agent version`)"
                     )
             except requests.exceptions.RequestException as e:
-                print(f"[{yellow_color}WARN{reset_color}]: MW Agent Health Check is failing ...\nException while MW Agent Health Check:{e}")
+                print(
+                    f"[{yellow_color}WARN{reset_color}]: MW Agent Health Check is failing ...\nException while MW Agent Health Check:{e}"
+                )
 
     def _get_instrument_info(self):
         if config.disable_info != True:
