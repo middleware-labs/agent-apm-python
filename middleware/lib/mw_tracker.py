@@ -1,3 +1,5 @@
+"""Module for MwTracker class"""
+
 import os
 import psutil
 import logging
@@ -11,6 +13,18 @@ reset_color = "\033[0m"
 
 
 class MwTracker:
+    """Class that pulls configuration settings from either environment
+    variables or ``middleware.ini`` and begins emitting and exporting
+    telemetry upon initialization. This should be intialized at the top
+    of your entrypoint.
+
+    Example
+    --------
+
+    >>> from middleware import MwTracker
+    >>> tracker = MwTracker()
+    """
+
     def __init__(self):
 
         self.project_name = config.project_name
@@ -52,7 +66,22 @@ class MwTracker:
         logging.getLogger().addHandler(handler)
         logging.setLogRecordFactory(self._set_custom_log_attr)
 
-    def record_error(self, error):
+    def record_error(self, error: BaseException) -> None:
+        """Records an exception and creates a span event
+
+        Parameters
+        ----------
+        error : BaseException
+            An Exception
+
+        Example
+        --------
+
+        >>> try:
+        ...    not_possible = 12 / 0
+        ... except ZeroDivisionError as e:
+        ...    tracker.record_error(e)
+        """
         from ._tracer import record_error
 
         record_error(error)
