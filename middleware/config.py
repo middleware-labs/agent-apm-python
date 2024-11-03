@@ -61,7 +61,6 @@ class Config:
             "collect_traces": "MW_APM_COLLECT_TRACES",
             "collect_metrics": "MW_APM_COLLECT_METRICS",
             "collect_logs": "MW_APM_COLLECT_LOGS",
-            "collect_profiling": "MW_APM_COLLECT_PROFILING",
             "otel_propagators": "MW_PROPAGATORS",
             "mw_agent_service": "MW_AGENT_SERVICE",
             "target": "MW_TARGET",
