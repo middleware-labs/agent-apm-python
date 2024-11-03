@@ -24,8 +24,6 @@ class MwTracker:
             self.collect_traces()
         if config.collect_logs:
             self.collect_logs()
-        if config.collect_profiling and not psutil.WINDOWS:
-            self.collect_profiling()
         self._get_instrument_info()
 
     def collect_metrics(self):
@@ -39,11 +37,6 @@ class MwTracker:
         from ._tracer import collect_traces
 
         collect_traces()
-
-    def collect_profiling(self):
-        from ._profiler import collect_profiling
-
-        collect_profiling()
 
     def collect_logs(self):
         from ._logger import log_handler
@@ -111,6 +104,4 @@ class MwTracker:
                 print(f"Traces: Enabled")
             if config.collect_logs:
                 print(f"Logs: Enabled")
-            if config.collect_profiling:
-                print(f"Profiling: Enabled")
             print(f"{reset_color}")
