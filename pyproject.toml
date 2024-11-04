@@ -11,7 +11,15 @@ requires-python = ">=3.8"
 license = { text = "Apache-2.0" }
 authors = [{ name = "middleware-dev" }]
 maintainers = [{ name = "middleware-dev" }]
-keywords = ["APM", "middleware", "monitoring", "tracing", "metrics", "logs", "profiling"]
+keywords = [
+    "APM",
+    "middleware",
+    "monitoring",
+    "tracing",
+    "metrics",
+    "logs",
+    "profiling",
+]
 dependencies = [
     "distro==1.9.0",
     "opentelemetry-api==1.27.0",
@@ -34,8 +42,11 @@ dependencies = [
     "opentelemetry-propagator-jaeger==1.27.0",
     "opentelemetry-propagator-aws-xray==1.0.2",
     "opentelemetry-propagator-ot-trace==0.48b0",
-    "opentelemetry-propagator-gcp==1.7.0"
+    "opentelemetry-propagator-gcp==1.7.0",
 ]
+
+[project.optional-dependencies]
+dev = ["pip-tools", "pylint", "black", "python-dotenv", "isort"]
 
 [project.urls]
 Source = "https://github.com/middleware-labs/agent-apm-python.git"
@@ -52,3 +63,9 @@ include = ["scripts", "middleware", "middleware.installer", "middleware.lib"]
 
 [tool.setuptools.package-data]
 "*" = ["middleware.ini"]
+
+[tool.pylint.format]
+max-line-length = "88"
+
+[tool.isort]
+profile = "black"
