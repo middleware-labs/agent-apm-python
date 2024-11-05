@@ -1,5 +1,9 @@
 import os
-import psutil
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 import logging
 import requests
 from middleware.version import SDK_VERSION
@@ -24,8 +28,9 @@ class MwTracker:
             self.collect_traces()
         if config.collect_logs:
             self.collect_logs()
-        if config.collect_profiling and not psutil.WINDOWS:
-            self.collect_profiling()
+        if PSUTIL_AVAILABLE:
+            if config.collect_profiling and not psutil.WINDOWS:
+                self.collect_profiling()
         self._get_instrument_info()
 
     def collect_metrics(self):
