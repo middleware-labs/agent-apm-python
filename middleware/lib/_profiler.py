@@ -1,6 +1,12 @@
 import os
 import requests, json
-import pyroscope
+try:
+    import pyroscope
+    PYROSCOPE_AVAILABLE = True
+except ImportError:
+    PYROSCOPE_AVAILABLE = False
+    # todo: report this information to Middleware servers
+    print("Warning: Pyroscope is not installed. Profiling features will be disabled.")
 from middleware.config import config
 
 green_color = "\033[92m"
@@ -8,7 +14,7 @@ yellow_color = "\033[93m"
 reset_color = "\033[0m"
 
 def collect_profiling() -> None:
-    if config.access_token != "":
+    if PYROSCOPE_AVAILABLE and config.access_token != "":
 
         # Setting Middleware Account Authentication URL
         auth_url = os.getenv('MW_AUTH_URL', 'https://app.middleware.io/api/v1/auth')

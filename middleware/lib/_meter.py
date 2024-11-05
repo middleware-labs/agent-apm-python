@@ -1,4 +1,11 @@
-import psutil
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    # todo: report this information to Middleware servers
+    print("Warning: psutil is not installed. Metrics features will be disabled.")
+    
 import os
 import threading
 import gc
@@ -26,25 +33,26 @@ class DiskUsageData(NamedTuple):
 
 
 def collect_metrics() -> None:
-    exporter = OTLPMetricExporter(
-        timeout=5,
-        compression=grpc.Compression.Gzip,
-    )
-    readers = [PeriodicExportingMetricReader(exporter)]
-    if config.console_exporter:
-        output= sys.stdout    
-        if config.debug_log_file:
-            output=open("mw-metrics.log", "w")
-        console_reader = PeriodicExportingMetricReader(
-            ConsoleMetricExporter(out=output)
+    if PSUTIL_AVAILABLE:
+        exporter = OTLPMetricExporter(
+            timeout=5,
+            compression=grpc.Compression.Gzip,
         )
-        readers.append(console_reader)
-    provider = MeterProvider(metric_readers=readers)
-    if metrics.get_meter_provider() is None:
-        metrics.set_meter_provider(provider)
-    # metrics.set_meter_provider(provider)
-    meter = provider.get_meter("sdk_meter_provider")
-    _generate_metrics(meter)
+        readers = [PeriodicExportingMetricReader(exporter)]
+        if config.console_exporter:
+            output= sys.stdout    
+            if config.debug_log_file:
+                output=open("mw-metrics.log", "w")
+            console_reader = PeriodicExportingMetricReader(
+                ConsoleMetricExporter(out=output)
+            )
+            readers.append(console_reader)
+        provider = MeterProvider(metric_readers=readers)
+        if metrics.get_meter_provider() is None:
+            metrics.set_meter_provider(provider)
+        # metrics.set_meter_provider(provider)
+        meter = provider.get_meter("sdk_meter_provider")
+        _generate_metrics(meter)
 
 
 def _generate_metrics(meter):
