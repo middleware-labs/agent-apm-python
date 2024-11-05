@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "middleware-apm"
-version = "1.2.3"
+version = "1.2.4rc0"
 description = "Middleware's APM tool enables Python developers to effortlessly monitor their applications, gathering distributed tracing, metrics, logs, and profiling data for valuable insights and performance optimization."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -35,6 +35,11 @@ dependencies = [
     "opentelemetry-propagator-aws-xray==1.0.2",
     "opentelemetry-propagator-ot-trace==0.48b0",
     "opentelemetry-propagator-gcp==1.7.0"
+]
+
+[project.optional-dependencies]
+test = [
+    "pyroscope-io==0.8.5",
 ]
 
 [project.urls]
