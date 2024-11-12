@@ -1,5 +1,6 @@
 import logging
 import os
+import requests
 from opentelemetry.sdk.environment_variables import (
     OTEL_EXPORTER_OTLP_ENDPOINT,
     OTEL_LOG_LEVEL,
@@ -7,7 +8,7 @@ from opentelemetry.sdk.environment_variables import (
 )
 from middleware.detectors.detector import Detector, process_detector_input
 from typing import Union, List
-
+from middleware.version import __version__
 # Environment Variable Names
 OTEL_SERVICE_VERSION = "OTEL_SERVICE_VERSION"
 DEBUG = "DEBUG"
@@ -220,10 +221,10 @@ class MWOptions:
         collect_metrics: bool = DEFAULT_COLLECT_METRICS,
         collect_logs: bool = DEFAULT_COLLECT_LOGS,
         log_level: str = DEFAULT_LOG_LEVEL,
-        mw_agent_service: str = None,
+        mw_agent_service: str = DEFAULT_AGENT_SERVICE,
         target: str = DEFAULT_TARGET,
         custom_resource_attributes: str = None,
-        otel_propagators: str = None,
+        otel_propagators: str = DEFAULT_PROPAGATORS,
         console_exporter: bool = False,
         debug_log_file: bool = False,
         project_name: str = None,
@@ -267,13 +268,14 @@ class MWOptions:
         self.otel_propagators = os.environ.get(
             OTEL_PROPAGATORS, os.environ.get(MW_PROPAGATORS, otel_propagators)
         )
-
+        os.environ["OTEL_PROPAGATORS"] = self.otel_propagators    
         self.console_exporter = parse_bool(MW_CONSOLE_EXPORTER, console_exporter)
         self.debug_log_file = parse_bool(MW_DEBUG_LOG_FILE, debug_log_file)
         self.project_name = os.environ.get(MW_PROJECT_NAME, project_name)
         self.sample_rate = parse_int(MW_SAMPLE_RATE, sample_rate, DEFAULT_SAMPLE_RATE)
         self.detectors = os.environ.get(MW_DETECTORS, detectors)
-
+        _health_check(options=self)
+        _get_instrument_info(options=self)
 
 def parse_bool(
     environment_variable: str, default_value: bool, error_message: str = None
@@ -332,3 +334,32 @@ def parse_int(
         return param
     else:
         return default_value
+
+def _health_check(options: MWOptions):
+    if options.target == "" or ("https" not in options.target) :
+        try:
+            response = requests.get(
+                f"http://{options.mw_agent_service}:13133/healthcheck", timeout=5
+            )
+            if response.status_code != 200:
+                _logger.warning(
+                    "MW Agent Health Check is failing ...\nThis could be due to incorrect value of MW_AGENT_SERVICE\nIgnore the warning if you are using MW Agent older than 1.7.7 (You can confirm by running `mw-agent version`)"
+                )
+        except requests.exceptions.RequestException as e:
+            _logger.warning(f"MW Agent Health Check is failing ...\nException while MW Agent Health Check:{e}")
+
+def _get_instrument_info(options: MWOptions):
+    _logger.debug(
+        f"Middleware Python Instrumentation Started with SDK version: {__version__}"
+    )
+    if options.target == "" or ("https" not in options.target):
+        _logger.debug(f"Using Agent Instrumentation")
+    else:
+        _logger.debug(f"Using Serverless Instrumentation")
+    _logger.debug(f"OTLP Endpoint:{options.target}")
+    if options.collect_metrics:
+        _logger.debug(f"Metrics: Enabled")
+    if options.collect_traces:
+        _logger.debug(f"Traces: Enabled")
+    if options.collect_logs:
+        _logger.debug(f"Logs: Enabled")
