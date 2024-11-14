@@ -7,6 +7,7 @@ from middleware.options import MWOptions, parse_bool
 from middleware.resource import create_resource
 from middleware.trace import create_tracer_provider
 from middleware.log import create_logger_handler
+from middleware.profiler import collect_profiling
 from opentelemetry import trace
 from opentelemetry.trace import Tracer, get_current_span, get_tracer
 
@@ -74,6 +75,8 @@ def mw_tracker(
     if options.collect_logs:
         handler = create_logger_handler(options, resource)
         logging.getLogger().addHandler(handler)
+    if options.collect_profiling:
+        collect_profiling(options)    
 
     mw_tracker_called = True
 

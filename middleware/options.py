@@ -23,6 +23,7 @@ MW_CUSTOM_RESOURCE_ATTRIBUTES = "MW_CUSTOM_RESOURCE_ATTRIBUTES"
 MW_APM_COLLECT_TRACES = "MW_APM_COLLECT_TRACES"
 MW_APM_COLLECT_METRICS = "MW_APM_COLLECT_METRICS"
 MW_APM_COLLECT_LOGS = "MW_APM_COLLECT_LOGS"
+MW_APM_COLLECT_PROFILING = "MW_APM_COLLECT_PROFILING"
 MW_PROPAGATORS = "MW_PROPAGATORS"
 MW_CONSOLE_EXPORTER = "MW_CONSOLE_EXPORTER"
 MW_DEBUG_LOG_FILE = "MW_DEBUG_LOG_FILE"
@@ -39,6 +40,7 @@ DEFAULT_PORT = "9319"
 DEFAULT_COLLECT_TRACES = True
 DEFAULT_COLLECT_METRICS = True
 DEFAULT_COLLECT_LOGS = True
+DEFAULT_COLLECT_PROFILING = False
 DEFAULT_AGENT_SERVICE = "localhost"
 DEFAULT_EXPORTER_PROTOCOL = "grpc"
 DEFAULT_SERVICE_NAME = "unknown_service:python"
@@ -121,6 +123,11 @@ class MWOptions:
       - Example usage:
                 collect_logs = True
 
+    - `collect_profiling (bool)`: Flag to collect profiling.
+      - Environment Variable: `MW_APM_COLLECT_PROFILING` (default: False).
+      - Example usage:
+                collect_profiling = True
+
     - `log_level (str)`: Logging level.
       - Environment Variable: `MW_LOG_LEVEL` (alternative: `OTEL_LOG_LEVEL`).
       - Example usage: (INFO, DEBUG, WARNING, ERROR)
@@ -202,6 +209,7 @@ class MWOptions:
     collect_traces = DEFAULT_COLLECT_TRACES
     collect_metrics = DEFAULT_COLLECT_METRICS
     collect_logs = DEFAULT_COLLECT_LOGS
+    collect_profiling = DEFAULT_COLLECT_PROFILING
     log_level = DEFAULT_LOG_LEVEL
     mw_agent_service = DEFAULT_AGENT_SERVICE
     target = DEFAULT_TARGET
@@ -220,6 +228,7 @@ class MWOptions:
         collect_traces: bool = DEFAULT_COLLECT_TRACES,
         collect_metrics: bool = DEFAULT_COLLECT_METRICS,
         collect_logs: bool = DEFAULT_COLLECT_LOGS,
+        collect_profiling: bool = DEFAULT_COLLECT_PROFILING,
         log_level: str = DEFAULT_LOG_LEVEL,
         mw_agent_service: str = DEFAULT_AGENT_SERVICE,
         target: str = DEFAULT_TARGET,
@@ -242,6 +251,7 @@ class MWOptions:
         self.collect_traces = parse_bool(MW_APM_COLLECT_TRACES, collect_traces)
         self.collect_metrics = parse_bool(MW_APM_COLLECT_METRICS, collect_metrics)
         self.collect_logs = parse_bool(MW_APM_COLLECT_LOGS, collect_logs)
+        self.collect_profiling = parse_bool(MW_APM_COLLECT_PROFILING, collect_profiling)
 
         log_level = os.environ.get(
             OTEL_LOG_LEVEL, os.environ.get(MW_LOG_LEVEL, log_level)
@@ -363,3 +373,5 @@ def _get_instrument_info(options: MWOptions):
         _logger.debug(f"Traces: Enabled")
     if options.collect_logs:
         _logger.debug(f"Logs: Enabled")
+    if options.collect_profiling:
+        _logger.debug(f"Profiling: Enabled")

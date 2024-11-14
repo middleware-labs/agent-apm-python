@@ -42,6 +42,9 @@ dependencies =[
     "opentelemetry-resourcedetector-docker==0.4.0",
 ]
 
+[project.optional-dependencies]
+profiling = ["pyroscope-io==0.8.5; sys_platform != 'win32'"] 
+
 [project.urls]
 Source = "https://github.com/middleware-labs/agent-apm-python.git"
 Homepage = "https://docs.middleware.io/docs/apm-configuration/python"
