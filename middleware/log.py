@@ -12,6 +12,7 @@ from opentelemetry.sdk._logs.export import (
     ConsoleLogExporter,
 )
 from opentelemetry._logs import set_logger_provider
+from logging import LogRecord
 from middleware.options import MWOptions, log_levels
 
 _logger = logging.getLogger(__name__)
@@ -52,9 +53,17 @@ def create_logger_handler(options: MWOptions, resource: Resource) -> LoggingHand
             )
         )
 
-    handler = LoggingHandler(
+    handler = MWLoggingHandler(
         level=log_levels[options.log_level], logger_provider=logger_provider
     )
     set_logger_provider(logger_provider)
 
     return handler
+
+class MWLoggingHandler(LoggingHandler):
+    @staticmethod
+    def _get_attributes(record: LogRecord):
+        attributes = LoggingHandler._get_attributes(record)
+        if "request" in attributes:
+            attributes["request"] = f'{attributes["request"].method} {attributes["request"].path}'
+        return attributes
