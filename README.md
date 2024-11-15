@@ -45,7 +45,7 @@ Requirements
 Run the following command in your terminal:
 
 ```shell
-pip install middleware-apm
+pip install middleware-io
 ```
 
 For further details on prerequisites, configuration options, and use, visit our docs page at [https://docs.middleware.io/apm-configuration/python](https://docs.middleware.io/apm-configuration/python).  

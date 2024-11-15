@@ -50,4 +50,4 @@ def collect_profiling(options: MWOptions) -> None:
             _logger.warning("profiling: disabled or access token not found")
 
     except:
-        _logger.warning("profiling dependencies not found, install using `pip install middleware-apm[profiling]`")
+        _logger.warning("profiling dependencies not found, install using `pip install middleware-io[profiling]`")
