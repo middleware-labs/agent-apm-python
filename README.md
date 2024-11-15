@@ -48,6 +48,12 @@ Run the following command in your terminal:
 pip install middleware-io
 ```
 
+To install with **Continuous Profiling** support:
+
+```shell
+pip install middleware-io[profiling]
+```
+
 For further details on prerequisites, configuration options, and use, visit our docs page at [https://docs.middleware.io/apm-configuration/python](https://docs.middleware.io/apm-configuration/python).  
 
 For framwork based python instrumentation examples, visit github repo at  [https://github.com/middleware-labs/demo-apm-python](https://github.com/middleware-labs/demo-apm-python).
@@ -69,4 +75,4 @@ Distributed under the Apache License. See `LICENSE` for more information.
 [license-url]: https://github.com/middleware-labs/agent-apm-python/blob/master/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/company/middleware-labs
-[product-screenshot]: https://private-user-images.githubusercontent.com/176276560/353724065-da5d3b3b-cd41-4dbc-b322-235eb1e7b0de.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzEzODc4NTgsIm5iZiI6MTczMTM4NzU1OCwicGF0aCI6Ii8xNzYyNzY1NjAvMzUzNzI0MDY1LWRhNWQzYjNiLWNkNDEtNGRiYy1iMzIyLTIzNWViMWU3YjBkZS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQxMTEyJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MTExMlQwNDU5MThaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0yMDk0ZGQ5MTgzOWVhNWZiNTY3OTVhM2MwZjY4NmEzZGY4MDdmMTE0NzMxMWI2ODEyMzg5MjA1Y2RkZGIyMmM0JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.IlESHyVxj6-27fHGuFDv8qqw-x-J31ELbdD03dG0fhY
+[product-screenshot]: https://private-user-images.githubusercontent.com/176276560/353724065-da5d3b3b-cd41-4dbc-b322-235eb1e7b0de.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzE2NzAxNzcsIm5iZiI6MTczMTY2OTg3NywicGF0aCI6Ii8xNzYyNzY1NjAvMzUzNzI0MDY1LWRhNWQzYjNiLWNkNDEtNGRiYy1iMzIyLTIzNWViMWU3YjBkZS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQxMTE1JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MTExNVQxMTI0MzdaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1kYjQwYTkzMDY5MGI2YTIyYjUzYjI3NzkwMWMxMzRkNDM0ZTU2OTZhNGQ2NmQ2MTc2YmM1ZmY0ZTNjNWE4NzEyJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.t03mymEssn8wA-KNIb7uIzaMQOMgiK_rBWgnepQ0awI
