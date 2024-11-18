@@ -75,4 +75,4 @@ Distributed under the Apache License. See `LICENSE` for more information.
 [license-url]: https://github.com/middleware-labs/agent-apm-python/blob/master/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/company/middleware-labs
-[product-screenshot]: ./images/353724065-da5d3b3b-cd41-4dbc-b322-235eb1e7b0de.png
+[product-screenshot]: ./product.png
