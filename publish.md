@@ -1,11 +1,11 @@
 To release a new version on PyPi ....
 
-https://pypi.org/manage/project/middleware-apm/releases/
+https://pypi.org/project/middleware-io/#history
 
 ---------------------------
 
 ### Step 1:
-Update version number in version.py
+Update version number in pyproject.toml
 
 ### Step 2:
 Push the changes to "master" branch

@@ -4,18 +4,65 @@ import threading
 import gc
 import grpc
 import sys
+import logging
 from sys import getswitchinterval
 from typing import NamedTuple
-from opentelemetry import metrics
-from opentelemetry.metrics import CallbackOptions, Observation
-
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.metrics import CallbackOptions, Observation, set_meter_provider
+import grpc
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.metrics import MeterProvider, Meter
 from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,
     ConsoleMetricExporter,
 )
-from middleware.config import config
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from middleware.options import MWOptions
+
+_logger = logging.getLogger(__name__)
+
+
+def create_meter_provider(options: MWOptions, resource: Resource):
+    """
+    Configures and returns a new MeterProvider to send metrics telemetry.
+
+    Args:
+        options (MWOptions): the middleware options to configure with
+        resource (Resource): the resource to use with the new meter provider
+
+    Returns:
+        MeterProvider: the new meter provider
+    """
+
+    exporter = OTLPMetricExporter(
+        endpoint=options.target,
+        compression=grpc.Compression.Gzip,
+    )
+    readers = [PeriodicExportingMetricReader(exporter)]
+    if options.console_exporter:
+        output = sys.stdout
+        if options.debug_log_file:
+            log_file = "mw-metrics"
+            try:
+                output = open(log_file, "w")
+            except Exception:
+                _logger.error(f"Cannot open the log file for writing: {log_file}")
+                output = sys.stdout
+        readers.append(
+            PeriodicExportingMetricReader(
+                ConsoleMetricExporter(
+                    out=output,
+                ),
+            )
+        )
+
+    provider = MeterProvider(metric_readers=readers, resource=resource)
+
+    meter = provider.get_meter("sdk_meter_provider")
+    _generate_metrics(meter)
+
+    set_meter_provider(meter_provider=provider)
+
+    return provider
 
 
 class DiskUsageData(NamedTuple):
@@ -25,29 +72,7 @@ class DiskUsageData(NamedTuple):
     percent: float
 
 
-def collect_metrics() -> None:
-    exporter = OTLPMetricExporter(
-        timeout=5,
-        compression=grpc.Compression.Gzip,
-    )
-    readers = [PeriodicExportingMetricReader(exporter)]
-    if config.console_exporter:
-        output= sys.stdout    
-        if config.debug_log_file:
-            output=open("mw-metrics.log", "w")
-        console_reader = PeriodicExportingMetricReader(
-            ConsoleMetricExporter(out=output)
-        )
-        readers.append(console_reader)
-    provider = MeterProvider(metric_readers=readers)
-    if metrics.get_meter_provider() is None:
-        metrics.set_meter_provider(provider)
-    # metrics.set_meter_provider(provider)
-    meter = provider.get_meter("sdk_meter_provider")
-    _generate_metrics(meter)
-
-
-def _generate_metrics(meter):
+def _generate_metrics(meter: Meter):
     meter.create_observable_gauge(
         "process.cpu_usage.percentage",
         unit="Percent",

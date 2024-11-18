@@ -3,52 +3,108 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "middleware-apm"
-version = "1.2.3"
-description = "Middleware's APM tool enables Python developers to effortlessly monitor their applications, gathering distributed tracing, metrics, logs, and profiling data for valuable insights and performance optimization."
-readme = "README.md"
+name = "middleware-io"
+version = "2.0.0"
 requires-python = ">=3.8"
-license = { text = "Apache-2.0" }
+description = "Middleware's APM tool enables Python developers to effortlessly monitor their applications, gathering distributed tracing, metrics, logs, and profiling data for valuable insights and performance optimization."
 authors = [{ name = "middleware-dev" }]
 maintainers = [{ name = "middleware-dev" }]
-keywords = ["APM", "middleware", "monitoring", "tracing", "metrics", "logs", "profiling"]
-dependencies = [
+readme = "README.md"
+license = { text = "Apache-2.0" }
+keywords = [
+    "APM",
+    "middleware",
+    "monitoring",
+    "tracing",
+    "metrics",
+    "logs",
+]
+dependencies =[
     "distro==1.9.0",
     "opentelemetry-api==1.27.0",
-    "opentelemetry-distro==0.48b0",
     "opentelemetry-exporter-otlp-proto-grpc==1.27.0",
     "opentelemetry-instrumentation==0.48b0",
-    "opentelemetry-instrumentation-django==0.48b0",
-    "opentelemetry-instrumentation-flask==0.48b0",
-    "opentelemetry-instrumentation-wsgi==0.48b0",
     "opentelemetry-proto==1.27.0",
     "opentelemetry-sdk==1.27.0",
     "opentelemetry-semantic-conventions==0.48b0",
     "opentelemetry-util-http==0.48b0",
-    "PyYAML==6.0.2",
     "requests==2.32.3",
-    "thrift==0.20.0",
     "psutil==6.0.0",
-    "tomli==2.0.1",
+    "opentelemetry-processor-baggage==0.48b0",
     "opentelemetry-propagator-b3==1.27.0",
     "opentelemetry-propagator-jaeger==1.27.0",
     "opentelemetry-propagator-aws-xray==1.0.2",
     "opentelemetry-propagator-ot-trace==0.48b0",
-    "opentelemetry-propagator-gcp==1.7.0"
+    "opentelemetry-propagator-gcp==1.7.0",
+    "opentelemetry-sdk-extension-aws==2.0.2",
+    "opentelemetry-resource-detector-azure==0.1.5",
+    "opentelemetry-resourcedetector-gcp==1.7.0a0",
+    "opentelemetry-resourcedetector-docker==0.4.0",
+    
+    "opentelemetry-instrumentation-aio-pika==0.48b0",
+    "opentelemetry-instrumentation-aiohttp-client==0.48b0",
+    "opentelemetry-instrumentation-aiohttp-server==0.48b0",
+    "opentelemetry-instrumentation-aiopg==0.48b0",
+    "opentelemetry-instrumentation-asgi==0.48b0",
+    "opentelemetry-instrumentation-asyncio==0.48b0",
+    "opentelemetry-instrumentation-asyncpg==0.48b0",
+    "opentelemetry-instrumentation-boto==0.48b0",
+    "opentelemetry-instrumentation-boto3sqs==0.48b0",
+    "opentelemetry-instrumentation-botocore==0.48b0",
+    "opentelemetry-instrumentation-cassandra==0.48b0",
+    "opentelemetry-instrumentation-celery==0.48b0",
+    "opentelemetry-instrumentation-confluent-kafka==0.48b0",
+    "opentelemetry-instrumentation-dbapi==0.48b0",
+    "opentelemetry-instrumentation-django==0.48b0",
+    "opentelemetry-instrumentation-elasticsearch==0.48b0",
+    "opentelemetry-instrumentation-falcon==0.48b0",
+    "opentelemetry-instrumentation-fastapi==0.48b0",
+    "opentelemetry-instrumentation-flask==0.48b0",
+    "opentelemetry-instrumentation-grpc==0.48b0",
+    "opentelemetry-instrumentation-httpx==0.48b0",
+    "opentelemetry-instrumentation-jinja2==0.48b0",
+    "opentelemetry-instrumentation-kafka-python==0.48b0",
+    "opentelemetry-instrumentation-logging==0.48b0",
+    "opentelemetry-instrumentation-mysql==0.48b0",
+    "opentelemetry-instrumentation-mysqlclient==0.48b0",
+    "opentelemetry-instrumentation-pika==0.48b0",
+    "opentelemetry-instrumentation-psycopg==0.48b0",
+    "opentelemetry-instrumentation-psycopg2==0.48b0",
+    "opentelemetry-instrumentation-pymemcache==0.48b0",
+    "opentelemetry-instrumentation-pymongo==0.48b0",
+    "opentelemetry-instrumentation-pymysql==0.48b0",
+    "opentelemetry-instrumentation-pyramid==0.48b0",
+    "opentelemetry-instrumentation-redis==0.48b0",
+    "opentelemetry-instrumentation-remoulade==0.48b0",
+    "opentelemetry-instrumentation-requests==0.48b0",
+    "opentelemetry-instrumentation-sqlalchemy==0.48b0",
+    "opentelemetry-instrumentation-sqlite3==0.48b0",
+    "opentelemetry-instrumentation-starlette==0.48b0",
+    "opentelemetry-instrumentation-system-metrics==0.48b0",
+    "opentelemetry-instrumentation-threading==0.48b0",
+    "opentelemetry-instrumentation-tornado==0.48b0",
+    "opentelemetry-instrumentation-tortoiseorm==0.48b0",
+    "opentelemetry-instrumentation-urllib==0.48b0",
+    "opentelemetry-instrumentation-urllib3==0.48b0",
+    "opentelemetry-instrumentation-wsgi",
 ]
+
+[project.optional-dependencies]
+profiling = ["pyroscope-io==0.8.5; sys_platform != 'win32'"] 
 
 [project.urls]
 Source = "https://github.com/middleware-labs/agent-apm-python.git"
 Homepage = "https://docs.middleware.io/docs/apm-configuration/python"
 
+[project.entry-points."opentelemetry_distro"]
+middleware_distro = "middleware.distro:MiddlewareDistro"
 
 [project.scripts]
-middleware-apm = "middleware.installer:main"
-middleware-instrument = "opentelemetry.instrumentation.auto_instrumentation:run"
+middleware-run = "opentelemetry.instrumentation.auto_instrumentation:run"
 middleware-bootstrap = "opentelemetry.instrumentation.bootstrap:run"
 
-[tool.setuptools.packages.find]
-include = ["scripts", "middleware", "middleware.installer", "middleware.lib"]
+[tool.pylint.format]
+max-line-length = "88"
 
-[tool.setuptools.package-data]
-"*" = ["middleware.ini"]
+[tool.isort]
+profile = "black"
