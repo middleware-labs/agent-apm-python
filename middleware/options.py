@@ -43,7 +43,7 @@ DEFAULT_COLLECT_LOGS = True
 DEFAULT_COLLECT_PROFILING = False
 DEFAULT_AGENT_SERVICE = "localhost"
 DEFAULT_EXPORTER_PROTOCOL = "grpc"
-DEFAULT_SERVICE_NAME = "unknown_service:python"
+DEFAULT_SERVICE_NAME = f"python-service-{os.getpid()}"
 DEFAULT_LOG_LEVEL = "INFO"
 DEFAULT_PROPAGATORS = "b3"
 DEFAULT_SAMPLE_RATE = 1
@@ -68,7 +68,7 @@ MISSING_SERVICE_NAME_ERROR = (
     "Missing service name. Specify either "
     + "OTEL_SERVICE_NAME/MW_SERVICE_NAME environment variable or service_name in the "
     + "options parameter. If left unset, this will show up in middleware "
-    + "as unknown_service:python"
+    + "as python-service-pid"
 )
 
 log_levels = {
@@ -245,7 +245,7 @@ class MWOptions:
             OTEL_SERVICE_NAME, os.environ.get(MW_SERVICE_NAME, service_name)
         )
         if not self.service_name:
-            _logger.warning(MISSING_SERVICE_NAME_ERROR)
+            _logger.debug(MISSING_SERVICE_NAME_ERROR)
             self.service_name = DEFAULT_SERVICE_NAME
 
         self.collect_traces = parse_bool(MW_APM_COLLECT_TRACES, collect_traces)
