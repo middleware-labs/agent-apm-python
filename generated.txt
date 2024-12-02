@@ -66,7 +66,7 @@ opentelemetry-sdk==1.15.0
 opentelemetry-semantic-conventions==0.36b0
 paramiko==2.6.0
 pexpect==4.6.0
-Pillow==7.0.0
+Pillow==9.3.0
 progressbar==2.5
 protobuf==3.6.1
 psutil==5.5.1
