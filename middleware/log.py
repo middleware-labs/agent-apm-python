@@ -60,14 +60,6 @@ def create_logger_handler(options: MWOptions, resource: Resource) -> LoggingHand
 
     return handler
 
-# class MWLoggingHandler(LoggingHandler):
-#     @staticmethod
-#     def _get_attributes(record: LogRecord):
-#         attributes = LoggingHandler._get_attributes(record)
-#         if "request" in attributes:
-#             attributes["request"] = f'{attributes["request"].method} {attributes["request"].path}'
-#         return attributes
-
 class MWLoggingHandler(LoggingHandler):
     @staticmethod
     def _get_attributes(record: LogRecord):
