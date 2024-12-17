@@ -60,10 +60,29 @@ def create_logger_handler(options: MWOptions, resource: Resource) -> LoggingHand
 
     return handler
 
+# class MWLoggingHandler(LoggingHandler):
+#     @staticmethod
+#     def _get_attributes(record: LogRecord):
+#         attributes = LoggingHandler._get_attributes(record)
+#         if "request" in attributes:
+#             attributes["request"] = f'{attributes["request"].method} {attributes["request"].path}'
+#         return attributes
+
 class MWLoggingHandler(LoggingHandler):
     @staticmethod
     def _get_attributes(record: LogRecord):
         attributes = LoggingHandler._get_attributes(record)
-        if "request" in attributes:
-            attributes["request"] = f'{attributes["request"].method} {attributes["request"].path}'
+
+        for key, value in attributes.items():
+            if key == "request":
+                if hasattr(value, "method") and hasattr(value, "path"):
+                    if len(vars(value)) == 2:
+                        attributes[key] = f'{value.method} {value.path}'
+                    else:
+                        attributes[key] = str(value)
+                else:
+                    attributes[key] = str(value)
+            elif not isinstance(value, (bool, str, bytes, int, float)):
+                attributes[key] = str(value)
+
         return attributes
