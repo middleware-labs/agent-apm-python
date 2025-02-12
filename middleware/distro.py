@@ -1,4 +1,6 @@
 import logging
+import inspect
+import traceback
 from logging import getLogger
 from typing import Optional
 from opentelemetry.instrumentation.distro import BaseDistro
@@ -9,7 +11,8 @@ from middleware.trace import create_tracer_provider
 from middleware.log import create_logger_handler
 from middleware.profiler import collect_profiling
 from opentelemetry import trace
-from opentelemetry.trace import Tracer, get_current_span, get_tracer
+from opentelemetry.trace import Tracer, get_current_span, get_tracer, Span
+
 
 _logger = getLogger(__name__)
 
@@ -80,8 +83,41 @@ def mw_tracker(
 
     mw_tracker_called = True
 
+def extract_function_code(tb_frame):
+    print("working......")
+    """Extracts the full function body where the exception occurred."""
+    try:
+        source_lines, _ = inspect.getsourcelines(tb_frame)
+        return "".join(source_lines)  # Convert to a string
+    except Exception:
+        return "Could not retrieve source code."
 
-def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
+def custom_record_exception(span: Span, exc: Exception):
+    """Custom exception recording that captures function source code."""
+    exc_type, exc_value, exc_tb = exc.__class__, str(exc), traceback.extract_tb(exc.__traceback__)
+    
+    if exc_tb:
+        last_tb = exc_tb[-1]  # Get the last traceback entry (where exception occurred)
+        filename, lineno, func_name, _ = last_tb
+        tb_frame = inspect.currentframe()
+
+        # Walk back to find the correct frame for the function
+        while tb_frame and tb_frame.f_code.co_name != func_name:
+            tb_frame = tb_frame.f_back
+        
+        function_code = extract_function_code(tb_frame) if tb_frame else "Function source not found."
+
+        span.set_attribute("exception.function_body", function_code)  # Store function body in span
+        span.set_attribute("exception.function_name", func_name)
+        span.set_attribute("exception.file", filename)
+        span.set_attribute("exception.line", lineno)
+    
+    span.record_exception(exc)
+
+# Patch OpenTelemetry's Span class (or modify it in your fork)
+Span.record_exception = custom_record_exception
+
+def record_exception2(exc: Exception, span_name: Optional[str] = None) -> None:
     """
     Reports an exception as a span event creating a dummy span if necessary.
 
@@ -99,6 +135,8 @@ def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
     >>>     record_exception(e)
 
     """
+    
+    print("working old ....")
 
     span = get_current_span()
     if span.is_recording():
