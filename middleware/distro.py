@@ -1,6 +1,7 @@
 import logging
 import inspect
 import traceback
+import sys
 from logging import getLogger
 from typing import Optional
 from opentelemetry.instrumentation.distro import BaseDistro
@@ -84,7 +85,6 @@ def mw_tracker(
     mw_tracker_called = True
 
 def extract_function_code(tb_frame):
-    print("working......")
     """Extracts the full function body where the exception occurred."""
     try:
         source_lines, _ = inspect.getsourcelines(tb_frame)
@@ -92,32 +92,57 @@ def extract_function_code(tb_frame):
     except Exception:
         return "Could not retrieve source code."
 
+# Replacement of span.record_exception to include function source code
 def custom_record_exception(span: Span, exc: Exception):
     """Custom exception recording that captures function source code."""
-    exc_type, exc_value, exc_tb = exc.__class__, str(exc), traceback.extract_tb(exc.__traceback__)
+    exc_type, exc_value, exc_tb = exc.__class__, str(exc), exc.__traceback__
+
+    if exc_tb is None:
+        span.set_attribute("exception.warning", "No traceback available")
+        span.record_exception(exc)
+        return
+
+    tb_details = traceback.extract_tb(exc_tb)
     
-    if exc_tb:
-        last_tb = exc_tb[-1]  # Get the last traceback entry (where exception occurred)
-        filename, lineno, func_name, _ = last_tb
-        tb_frame = inspect.currentframe()
+    if not tb_details:
+        span.set_attribute("exception.warning", "Traceback is empty")
+        span.record_exception(exc)
+        return
 
-        # Walk back to find the correct frame for the function
-        while tb_frame and tb_frame.f_code.co_name != func_name:
-            tb_frame = tb_frame.f_back
-        
-        function_code = extract_function_code(tb_frame) if tb_frame else "Function source not found."
-
-        span.set_attribute("exception.function_body", function_code)  # Store function body in span
-        span.set_attribute("exception.function_name", func_name)
-        span.set_attribute("exception.file", filename)
-        span.set_attribute("exception.line", lineno)
+    last_tb = tb_details[-1]  # Get the last traceback entry (where exception occurred)
+    filename, lineno, func_name, _ = last_tb
     
-    span.record_exception(exc)
+    # Extract the correct frame from the traceback
+    tb_frame = None
+    for frame, _ in traceback.walk_tb(exc_tb):
+        if frame.f_code.co_name == func_name:
+            tb_frame = frame
+            break
 
-# Patch OpenTelemetry's Span class (or modify it in your fork)
-Span.record_exception = custom_record_exception
 
-def record_exception2(exc: Exception, span_name: Optional[str] = None) -> None:
+
+    function_code = extract_function_code(tb_frame) if tb_frame else "Function source not found."
+    
+     # Determine if the exception is escaping
+    current_exc = sys.exc_info()[1]  # Get the currently active exception
+    exception_escaped = current_exc is exc  # True if it's still propagating
+    
+    # Add extra details in the existing "exception" event
+    span.add_event(
+        "exception",  # Keep the event name as "exception"
+        {
+            "exception.type": str(exc_type.__name__),
+            "exception.message": exc_value,
+            "exception.stacktrace": traceback.format_exc(),
+            "exception.function_name": func_name,
+            "exception.file": filename,
+            "exception.line": lineno,
+            "exception.function_body": function_code,
+            "exception.escaped": exception_escaped,
+        }
+    )
+
+def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
     """
     Reports an exception as a span event creating a dummy span if necessary.
 
@@ -135,12 +160,10 @@ def record_exception2(exc: Exception, span_name: Optional[str] = None) -> None:
     >>>     record_exception(e)
 
     """
-    
-    print("working old ....")
 
     span = get_current_span()
     if span.is_recording():
-        span.record_exception(exc)
+        custom_record_exception(span, exc)
         return
 
     tracer: Tracer = get_tracer("mw-tracer")
@@ -148,7 +171,7 @@ def record_exception2(exc: Exception, span_name: Optional[str] = None) -> None:
         span_name = type(exc).__name__
 
     span = tracer.start_span(span_name)
-    span.record_exception(exc)
+    custom_record_exception(span, exc)
     span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
     span.end()
 
