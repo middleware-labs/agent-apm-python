@@ -1,6 +1,7 @@
 import logging
 import inspect
 import traceback
+from typing import Optional, Type
 import sys
 from logging import getLogger
 from typing import Optional
@@ -12,7 +13,7 @@ from middleware.trace import create_tracer_provider
 from middleware.log import create_logger_handler
 from middleware.profiler import collect_profiling
 from opentelemetry import trace
-from opentelemetry.trace import Tracer, get_current_span, get_tracer, Span
+from opentelemetry.trace import Tracer, get_current_span, get_tracer, Span, get_tracer, Status, StatusCode
 
 
 _logger = getLogger(__name__)
@@ -142,38 +143,38 @@ def custom_record_exception(span: Span, exc: Exception):
         }
     )
 
-def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
+def record_exception(exc_type: Type[BaseException], exc_value: BaseException, exc_traceback) -> None:
     """
-    Reports an exception as a span event creating a dummy span if necessary.
+    Reports an exception as a span event, creating a dummy span if necessary.
 
     Args:
-        exc (Exception): Pass Exception to record as in a current span.
-        span_name (String,Optional): Span Name to use if no current span found,
-                                     defaults to Exception Name.
+        exc_type (Type[BaseException]): The type of the exception.
+        exc_value (BaseException): The exception instance.
+        exc_traceback: The traceback object.
 
     Example
     --------
-    >>> from middleware import record_exception
+    >>> import sys
     >>> try:
-    >>>     print("Divide by zero:",1/0)
+    >>>     print("Divide by zero:", 1 / 0)
     >>> except Exception as e:
-    >>>     record_exception(e)
+    >>>     sys.excepthook(*sys.exc_info())
 
     """
 
+    # Retrieve the current span if available
     span = get_current_span()
-    if span.is_recording():
-        custom_record_exception(span, exc)
+    if span and span.is_recording():
+        custom_record_exception(span, exc_value)
         return
 
+    # Create a new span if none is found
     tracer: Tracer = get_tracer("mw-tracer")
-    if span_name is None:
-        span_name = type(exc).__name__
+    span_name = exc_type.__name__ if exc_type else "UnknownException"
 
-    span = tracer.start_span(span_name)
-    custom_record_exception(span, exc)
-    span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
-    span.end()
+    with tracer.start_span(span_name) as span:
+        custom_record_exception(span, exc_value)
+        span.set_status(Status(StatusCode.ERROR, str(exc_value)))
 
 
 # pylint: disable=too-few-public-methods
