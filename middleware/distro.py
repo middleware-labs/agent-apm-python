@@ -14,6 +14,7 @@ from middleware.log import create_logger_handler
 from middleware.profiler import collect_profiling
 from opentelemetry import trace
 from opentelemetry.trace import Tracer, get_current_span, get_tracer, Span, get_tracer, Status, StatusCode
+import os
 
 
 _logger = getLogger(__name__)
@@ -95,21 +96,27 @@ def extract_function_code(tb_frame):
 
 # Replacement of span.record_exception to include function source code
 def custom_record_exception(span: Span, exc: Exception):
+    print('test....')
     """Custom exception recording that captures function source code."""
     exc_type, exc_value, exc_tb = exc.__class__, str(exc), exc.__traceback__
 
+    print('test1....')
     if exc_tb is None:
+        print('test2....')
         span.set_attribute("exception.warning", "No traceback available")
-        span.record_exception(exc)
+        # span.record_exception(exc)
         return
 
+    print('test3....')
     tb_details = traceback.extract_tb(exc_tb)
     
     if not tb_details:
+        print('test4....')
         span.set_attribute("exception.warning", "Traceback is empty")
         span.record_exception(exc)
         return
-
+    
+    print('test5....')
     last_tb = tb_details[-1]  # Get the last traceback entry (where exception occurred)
     filename, lineno, func_name, _ = last_tb
     
@@ -128,6 +135,13 @@ def custom_record_exception(span: Span, exc: Exception):
     current_exc = sys.exc_info()[1]  # Get the currently active exception
     exception_escaped = current_exc is exc  # True if it's still propagating
     
+    
+    mw_git_repository_url = os.getenv("MW_GIT_REPOSITORY_URL")
+    mw_git_commit_sha = os.getenv("MW_GIT_COMMIT_SHA")
+    
+    print('mw_git_repository_url', mw_git_repository_url)
+    print('mw_git_commit_sha', mw_git_commit_sha)
+    
     # Add extra details in the existing "exception" event
     span.add_event(
         "exception",  # Keep the event name as "exception"
@@ -140,6 +154,8 @@ def custom_record_exception(span: Span, exc: Exception):
             "exception.line": lineno,
             "exception.function_body": function_code,
             "exception.escaped": exception_escaped,
+            "exception.github.commit_sha": mw_git_commit_sha or "",
+            "exception.github.repository_url": mw_git_repository_url or "",
         }
     )
 
@@ -161,7 +177,7 @@ def record_exception(exc_type: Type[BaseException], exc_value: BaseException, ex
     >>>     sys.excepthook(*sys.exc_info())
 
     """
-
+    print('record ....')
     # Retrieve the current span if available
     span = get_current_span()
     if span and span.is_recording():
