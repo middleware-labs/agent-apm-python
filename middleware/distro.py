@@ -96,18 +96,14 @@ def extract_function_code(tb_frame):
 
 # Replacement of span.record_exception to include function source code
 def custom_record_exception(span: Span, exc: Exception):
-    print('test....')
     """Custom exception recording that captures function source code."""
     exc_type, exc_value, exc_tb = exc.__class__, str(exc), exc.__traceback__
 
-    print('test1....')
     if exc_tb is None:
-        print('test2....')
         span.set_attribute("exception.warning", "No traceback available")
         # span.record_exception(exc)
         return
 
-    print('test3....')
     tb_details = traceback.extract_tb(exc_tb)
     
     if not tb_details:
@@ -120,7 +116,6 @@ def custom_record_exception(span: Span, exc: Exception):
     for (frame, _), (filename, lineno, func_name, _) in zip(traceback.walk_tb(exc_tb), tb_details):
         function_code = extract_function_code(frame) if frame else "Function source not found."
         
-        print("lineno", lineno)
         stack_info.append({
             "exception.file": filename,
             "exception.line": lineno,
@@ -134,12 +129,9 @@ def custom_record_exception(span: Span, exc: Exception):
 
     mw_git_repository_url = os.getenv("MW_GIT_REPOSITORY_URL")
     mw_git_commit_sha = os.getenv("MW_GIT_COMMIT_SHA")
-
-    print(stack_info, "stack_info")
-    
+  
     # Serialize stack info as JSON string since OpenTelemetry only supports string values
     stack_info_str = json.dumps(stack_info, indent=2)
-    print(stack_info_str, "stack_info_str")
     
     # Add extra details in the existing "exception" event
     span.add_event(
@@ -173,7 +165,6 @@ def record_exception(exc_type: Type[BaseException], exc_value: BaseException, ex
     >>>     sys.excepthook(*sys.exc_info())
 
     """
-    print('record ....')
     # Retrieve the current span if available
     span = get_current_span()
     if span and span.is_recording():

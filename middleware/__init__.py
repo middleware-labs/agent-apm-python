@@ -47,7 +47,6 @@ class ExceptionInstrumentor(BaseInstrumentor):
         return []
     
     def _instrument(self, **kwargs):
-        print('yes...')
         """Automatically sets sys.excepthook when the instrumentor is loaded."""
         sys.excepthook = record_exception
         threading.excepthook = thread_excepthook
