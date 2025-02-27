@@ -86,13 +86,32 @@ def mw_tracker(
 
     mw_tracker_called = True
 
-def extract_function_code(tb_frame):
+def extract_function_code(tb_frame, lineno):
     """Extracts the full function body where the exception occurred."""
     try:
-        source_lines, _ = inspect.getsourcelines(tb_frame)
-        return "".join(source_lines)  # Convert to a string
+        source_lines, start_line = inspect.getsourcelines(tb_frame)
+        end_line = start_line + len(source_lines) - 1
+        
+        if len(source_lines) > 20:
+            # Get 10 lines above and 10 below the exception line
+            start_idx = max(0, lineno - start_line - 10)
+            end_idx = min(len(source_lines), lineno - start_line + 10)
+            source_lines = source_lines[start_idx:end_idx]
+        
+        function_code = "".join(source_lines)  # Convert to a string
+        
+        return {
+            "function_code": function_code,
+            "function_start_line": start_line if len(source_lines) <= 20 else None,
+            "function_end_line": end_line if len(source_lines) <= 20 else None,
+        }    
+        
     except Exception as e:
-        return f"Error extracting function code: {e}"
+        return {
+            "function_code": f"Error extracting function code: {e}",
+            "function_start_line": None,
+            "function_end_line": None
+        }
 
 # Replacement of span.record_exception to include function source code
 def custom_record_exception(span: Span, exc: Exception):
@@ -114,13 +133,15 @@ def custom_record_exception(span: Span, exc: Exception):
     stack_info = []
     
     for (frame, _), (filename, lineno, func_name, _) in zip(traceback.walk_tb(exc_tb), tb_details):
-        function_code = extract_function_code(frame) if frame else "Function source not found."
+        function_details = extract_function_code(frame, lineno) if frame else "Function source not found."
         
         stack_info.append({
             "exception.file": filename,
             "exception.line": lineno,
             "exception.function_name": func_name,
-            "exception.function_body": function_code
+            "exception.function_body": function_details["function_code"],
+            "exception.start_line": function_details["function_start_line"],
+            "exception.end_line": function_details["function_end_line"],
         })
 
     # Determine if the exception is escaping
