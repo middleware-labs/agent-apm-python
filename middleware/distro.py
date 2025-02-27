@@ -101,7 +101,7 @@ def custom_record_exception(span: Span, exc: Exception):
 
     if exc_tb is None:
         span.set_attribute("exception.warning", "No traceback available")
-        # span.record_exception(exc)
+        span.record_exception(exc)
         return
 
     tb_details = traceback.extract_tb(exc_tb)
