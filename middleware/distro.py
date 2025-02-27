@@ -15,7 +15,7 @@ from middleware.profiler import collect_profiling
 from opentelemetry import trace
 from opentelemetry.trace import Tracer, get_current_span, get_tracer, Span, get_tracer, Status, StatusCode
 import os
-
+import json
 
 _logger = getLogger(__name__)
 
@@ -91,8 +91,8 @@ def extract_function_code(tb_frame):
     try:
         source_lines, _ = inspect.getsourcelines(tb_frame)
         return "".join(source_lines)  # Convert to a string
-    except Exception:
-        return "Could not retrieve source code."
+    except Exception as e:
+        return f"Error extracting function code: {e}"
 
 # Replacement of span.record_exception to include function source code
 def custom_record_exception(span: Span, exc: Exception):
@@ -111,51 +111,47 @@ def custom_record_exception(span: Span, exc: Exception):
     tb_details = traceback.extract_tb(exc_tb)
     
     if not tb_details:
-        print('test4....')
         span.set_attribute("exception.warning", "Traceback is empty")
         span.record_exception(exc)
         return
-    
-    print('test5....')
-    last_tb = tb_details[-1]  # Get the last traceback entry (where exception occurred)
-    filename, lineno, func_name, _ = last_tb
-    
-    # Extract the correct frame from the traceback
-    tb_frame = None
-    for frame, _ in traceback.walk_tb(exc_tb):
-        if frame.f_code.co_name == func_name:
-            tb_frame = frame
-            break
 
-
-
-    function_code = extract_function_code(tb_frame) if tb_frame else "Function source not found."
+    stack_info = []
     
-     # Determine if the exception is escaping
+    for (frame, _), (filename, lineno, func_name, _) in zip(traceback.walk_tb(exc_tb), tb_details):
+        function_code = extract_function_code(frame) if frame else "Function source not found."
+        
+        print("lineno", lineno)
+        stack_info.append({
+            "exception.file": filename,
+            "exception.line": lineno,
+            "exception.function_name": func_name,
+            "exception.function_body": function_code
+        })
+
+    # Determine if the exception is escaping
     current_exc = sys.exc_info()[1]  # Get the currently active exception
     exception_escaped = current_exc is exc  # True if it's still propagating
-    
-    
+
     mw_git_repository_url = os.getenv("MW_GIT_REPOSITORY_URL")
     mw_git_commit_sha = os.getenv("MW_GIT_COMMIT_SHA")
+
+    print(stack_info, "stack_info")
     
-    print('mw_git_repository_url', mw_git_repository_url)
-    print('mw_git_commit_sha', mw_git_commit_sha)
+    # Serialize stack info as JSON string since OpenTelemetry only supports string values
+    stack_info_str = json.dumps(stack_info, indent=2)
+    print(stack_info_str, "stack_info_str")
     
     # Add extra details in the existing "exception" event
     span.add_event(
-        "exception",  # Keep the event name as "exception"
+        "exception",  
         {
             "exception.type": str(exc_type.__name__),
             "exception.message": exc_value,
             "exception.stacktrace": traceback.format_exc(),
-            "exception.function_name": func_name,
-            "exception.file": filename,
-            "exception.line": lineno,
-            "exception.function_body": function_code,
             "exception.escaped": exception_escaped,
             "exception.github.commit_sha": mw_git_commit_sha or "",
             "exception.github.repository_url": mw_git_repository_url or "",
+            "exception.stack_details": stack_info_str,  # Attach full stacktrace details
         }
     )
 
