@@ -1,6 +1,7 @@
 import logging
 import inspect
 import traceback
+from typing import Optional, Type
 import sys
 from logging import getLogger
 from typing import Optional
@@ -12,8 +13,9 @@ from middleware.trace import create_tracer_provider
 from middleware.log import create_logger_handler
 from middleware.profiler import collect_profiling
 from opentelemetry import trace
-from opentelemetry.trace import Tracer, get_current_span, get_tracer, Span
-
+from opentelemetry.trace import Tracer, get_current_span, get_tracer, Span, get_tracer, Status, StatusCode
+import os
+import json
 
 _logger = getLogger(__name__)
 
@@ -84,13 +86,32 @@ def mw_tracker(
 
     mw_tracker_called = True
 
-def extract_function_code(tb_frame):
+def extract_function_code(tb_frame, lineno):
     """Extracts the full function body where the exception occurred."""
     try:
-        source_lines, _ = inspect.getsourcelines(tb_frame)
-        return "".join(source_lines)  # Convert to a string
-    except Exception:
-        return "Could not retrieve source code."
+        source_lines, start_line = inspect.getsourcelines(tb_frame)
+        end_line = start_line + len(source_lines) - 1
+        
+        if len(source_lines) > 20:
+            # Get 10 lines above and 10 below the exception line
+            start_idx = max(0, lineno - start_line - 10)
+            end_idx = min(len(source_lines), lineno - start_line + 10)
+            source_lines = source_lines[start_idx:end_idx]
+        
+        function_code = "".join(source_lines)  # Convert to a string
+        
+        return {
+            "function_code": function_code,
+            "function_start_line": start_line if len(source_lines) <= 20 else None,
+            "function_end_line": end_line if len(source_lines) <= 20 else None,
+        }    
+        
+    except Exception as e:
+        return {
+            "function_code": f"Error extracting function code: {e}",
+            "function_start_line": None,
+            "function_end_line": None
+        }
 
 # Replacement of span.record_exception to include function source code
 def custom_record_exception(span: Span, exc: Exception):
@@ -109,71 +130,75 @@ def custom_record_exception(span: Span, exc: Exception):
         span.record_exception(exc)
         return
 
-    last_tb = tb_details[-1]  # Get the last traceback entry (where exception occurred)
-    filename, lineno, func_name, _ = last_tb
+    stack_info = []
     
-    # Extract the correct frame from the traceback
-    tb_frame = None
-    for frame, _ in traceback.walk_tb(exc_tb):
-        if frame.f_code.co_name == func_name:
-            tb_frame = frame
-            break
+    for (frame, _), (filename, lineno, func_name, _) in zip(traceback.walk_tb(exc_tb), tb_details):
+        function_details = extract_function_code(frame, lineno) if frame else "Function source not found."
+        
+        stack_info.append({
+            "exception.file": filename,
+            "exception.line": lineno,
+            "exception.function_name": func_name,
+            "exception.function_body": function_details["function_code"],
+            "exception.start_line": function_details["function_start_line"],
+            "exception.end_line": function_details["function_end_line"],
+        })
 
-
-
-    function_code = extract_function_code(tb_frame) if tb_frame else "Function source not found."
-    
-     # Determine if the exception is escaping
+    # Determine if the exception is escaping
     current_exc = sys.exc_info()[1]  # Get the currently active exception
     exception_escaped = current_exc is exc  # True if it's still propagating
+
+    mw_git_repository_url = os.getenv("MW_GIT_REPOSITORY_URL")
+    mw_git_commit_sha = os.getenv("MW_GIT_COMMIT_SHA")
+  
+    # Serialize stack info as JSON string since OpenTelemetry only supports string values
+    stack_info_str = json.dumps(stack_info, indent=2)
     
     # Add extra details in the existing "exception" event
     span.add_event(
-        "exception",  # Keep the event name as "exception"
+        "exception",  
         {
             "exception.type": str(exc_type.__name__),
             "exception.message": exc_value,
             "exception.stacktrace": traceback.format_exc(),
-            "exception.function_name": func_name,
-            "exception.file": filename,
-            "exception.line": lineno,
-            "exception.function_body": function_code,
             "exception.escaped": exception_escaped,
+            "exception.github.commit_sha": mw_git_commit_sha or "",
+            "exception.github.repository_url": mw_git_repository_url or "",
+            "exception.stack_details": stack_info_str,  # Attach full stacktrace details
         }
     )
 
-def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
+def record_exception(exc_type: Type[BaseException], exc_value: BaseException, exc_traceback) -> None:
     """
-    Reports an exception as a span event creating a dummy span if necessary.
+    Reports an exception as a span event, creating a dummy span if necessary.
 
     Args:
-        exc (Exception): Pass Exception to record as in a current span.
-        span_name (String,Optional): Span Name to use if no current span found,
-                                     defaults to Exception Name.
+        exc_type (Type[BaseException]): The type of the exception.
+        exc_value (BaseException): The exception instance.
+        exc_traceback: The traceback object.
 
     Example
     --------
-    >>> from middleware import record_exception
+    >>> import sys
     >>> try:
-    >>>     print("Divide by zero:",1/0)
+    >>>     print("Divide by zero:", 1 / 0)
     >>> except Exception as e:
-    >>>     record_exception(e)
+    >>>     sys.excepthook(*sys.exc_info())
 
     """
-
+    # Retrieve the current span if available
     span = get_current_span()
-    if span.is_recording():
-        custom_record_exception(span, exc)
+    if span and span.is_recording():
+        custom_record_exception(span, exc_value)
         return
 
+    # Create a new span if none is found
     tracer: Tracer = get_tracer("mw-tracer")
-    if span_name is None:
-        span_name = type(exc).__name__
+    span_name = exc_type.__name__ if exc_type else "UnknownException"
 
-    span = tracer.start_span(span_name)
-    custom_record_exception(span, exc)
-    span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
-    span.end()
+    with tracer.start_span(span_name) as span:
+        custom_record_exception(span, exc_value)
+        span.set_status(Status(StatusCode.ERROR, str(exc_value)))
 
 
 # pylint: disable=too-few-public-methods
