@@ -148,8 +148,8 @@ def custom_record_exception(span: Span, exc: Exception):
     current_exc = sys.exc_info()[1]  # Get the currently active exception
     exception_escaped = current_exc is exc  # True if it's still propagating
 
-    mw_git_repository_url = os.getenv("MW_GIT_REPOSITORY_URL")
-    mw_git_commit_sha = os.getenv("MW_GIT_COMMIT_SHA")
+    mw_vcs_repository_url = os.getenv("MW_VCS_REPOSITORY_URL")
+    mw_vcs_commit_sha = os.getenv("MW_VCS_COMMIT_SHA")
   
     # Serialize stack info as JSON string since OpenTelemetry only supports string values
     stack_info_str = json.dumps(stack_info, indent=2)
@@ -162,8 +162,8 @@ def custom_record_exception(span: Span, exc: Exception):
             "exception.message": exc_value,
             "exception.stacktrace": traceback.format_exc(),
             "exception.escaped": exception_escaped,
-            "exception.github.commit_sha": mw_git_commit_sha or "",
-            "exception.github.repository_url": mw_git_repository_url or "",
+            "exception.vcs.commit_sha": mw_vcs_commit_sha or "",
+            "exception.vcs.repository_url": mw_vcs_repository_url or "",
             "exception.stack_details": stack_info_str,  # Attach full stacktrace details
         }
     )
