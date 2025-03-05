@@ -58,3 +58,28 @@ class ExceptionInstrumentor(BaseInstrumentor):
 # Load the instrumentor
 ExceptionInstrumentor().instrument()
 
+# Automatic exception handling for flask
+from flask import Flask, request
+from flask.signals import got_request_exception, appcontext_pushed
+import traceback
+
+def _capture_exception(sender, exception, **extra):
+    exc_type, exc_value, exc_traceback = sys.exc_info()  # Get exception details
+    if exc_type and exc_value and exc_traceback:
+        record_exception(exc_type, exc_value, exc_traceback)
+    else:
+        print("Unable to capture exception details.")
+
+def try_register_flask_handler(app: Flask):
+    """Registers the exception handler using Flask signals."""
+    got_request_exception.connect(_capture_exception, app)
+    print("✅ Flask error handler registered via signal.")
+
+def _auto_register(sender, **extra):
+    """Automatically registers the handler when a Flask app context is pushed."""
+    try_register_flask_handler(sender)
+
+# Connect to Flask's appcontext_pushed to register automatically
+appcontext_pushed.connect(_auto_register)
+
+
