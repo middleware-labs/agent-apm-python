@@ -84,49 +84,32 @@ appcontext_pushed.connect(_auto_register)
 
 
 # Automatic exception handling for FastAPI
-# import sys
-# import traceback
-# from fastapi import FastAPI, Request
-# from starlette.middleware.base import BaseHTTPMiddleware
-# from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
-# async def fastapi_exception_handler(request: Request, exc: Exception):
-#     print("111 FastAPI _capture_exception Unhandled exception detected.")
-#     """Handles unhandled exceptions globally in FastAPI."""
-#     exc_type, exc_value, exc_traceback = sys.exc_info()
-#     if exc_type and exc_value and exc_traceback:
-#         record_exception(exc_type, exc_value, exc_traceback)
-#     return StarletteHTTPException(status_code=500, detail="Internal Server Error")
+class ExceptionMiddleware(BaseHTTPMiddleware):
+    """Middleware to catch unhandled exceptions globally."""
+    async def dispatch(self, request: Request, call_next):
+        try:
+            return await call_next(request)
+        except Exception as exc:
+            exc_type, exc_value, exc_traceback = exc.__class__, exc, exc.__traceback__
+            record_exception(exc_type, exc_value, exc_traceback)
+            
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal Server Error"},
+            )
+        
+from fastapi import FastAPI
+# from starlette.middleware import ExceptionMiddleware
 
-# class ExceptionMiddleware(BaseHTTPMiddleware):
-#     print("222 FastAPI _capture_exception Unhandled exception detected.")
-#     """Middleware to capture unhandled exceptions in FastAPI."""
-#     async def dispatch(self, request, call_next):
-#         print("3333 FastAPI _capture_exception Unhandled exception detected.")
-#         try:
-#             return await call_next(request)
-#         except Exception as e:
-#             exc_type, exc_value, exc_traceback = sys.exc_info()
-#             if exc_type and exc_value and exc_traceback:
-#                 record_exception(exc_type, exc_value, exc_traceback)
-#             raise e
+_original_init = FastAPI.__init__
 
-# def try_register_fastapi_handler(app: FastAPI):
-#     """Registers the exception handler automatically when FastAPI is detected."""
-#     app.add_exception_handler(Exception, fastapi_exception_handler)
-#     app.add_middleware(ExceptionMiddleware)
-#     print("✅ FastAPI error handler registered automatically.")
+def new_fastapi_init(self, *args, **kwargs):
+    _original_init(self, *args, **kwargs)
+    print("✅ FastAPI instance created, registering ExceptionMiddleware.")
+    self.add_middleware(ExceptionMiddleware)
 
-# def auto_register_fastapi():
-#     """Automatically detect FastAPI and register the handler."""
-#     if "fastapi" in sys.modules:
-#         app = None
-#         for obj in sys.modules["fastapi"].__dict__.values():
-#             if isinstance(obj, type) and issubclass(obj, FastAPI):
-#                 app = obj()
-#                 break
-#         if app:
-#             try_register_fastapi_handler(app)
-
-# # Try auto-registering when the package is imported
-# auto_register_fastapi()
+FastAPI.__init__ = new_fastapi_init
