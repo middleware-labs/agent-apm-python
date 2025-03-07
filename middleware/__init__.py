@@ -83,3 +83,50 @@ def _auto_register(sender, **extra):
 appcontext_pushed.connect(_auto_register)
 
 
+# Automatic exception handling for FastAPI
+# import sys
+# import traceback
+# from fastapi import FastAPI, Request
+# from starlette.middleware.base import BaseHTTPMiddleware
+# from starlette.exceptions import HTTPException as StarletteHTTPException
+
+# async def fastapi_exception_handler(request: Request, exc: Exception):
+#     print("111 FastAPI _capture_exception Unhandled exception detected.")
+#     """Handles unhandled exceptions globally in FastAPI."""
+#     exc_type, exc_value, exc_traceback = sys.exc_info()
+#     if exc_type and exc_value and exc_traceback:
+#         record_exception(exc_type, exc_value, exc_traceback)
+#     return StarletteHTTPException(status_code=500, detail="Internal Server Error")
+
+# class ExceptionMiddleware(BaseHTTPMiddleware):
+#     print("222 FastAPI _capture_exception Unhandled exception detected.")
+#     """Middleware to capture unhandled exceptions in FastAPI."""
+#     async def dispatch(self, request, call_next):
+#         print("3333 FastAPI _capture_exception Unhandled exception detected.")
+#         try:
+#             return await call_next(request)
+#         except Exception as e:
+#             exc_type, exc_value, exc_traceback = sys.exc_info()
+#             if exc_type and exc_value and exc_traceback:
+#                 record_exception(exc_type, exc_value, exc_traceback)
+#             raise e
+
+# def try_register_fastapi_handler(app: FastAPI):
+#     """Registers the exception handler automatically when FastAPI is detected."""
+#     app.add_exception_handler(Exception, fastapi_exception_handler)
+#     app.add_middleware(ExceptionMiddleware)
+#     print("✅ FastAPI error handler registered automatically.")
+
+# def auto_register_fastapi():
+#     """Automatically detect FastAPI and register the handler."""
+#     if "fastapi" in sys.modules:
+#         app = None
+#         for obj in sys.modules["fastapi"].__dict__.values():
+#             if isinstance(obj, type) and issubclass(obj, FastAPI):
+#                 app = obj()
+#                 break
+#         if app:
+#             try_register_fastapi_handler(app)
+
+# # Try auto-registering when the package is imported
+# auto_register_fastapi()

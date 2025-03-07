@@ -134,15 +134,23 @@ def custom_record_exception(span: Span, exc: Exception):
     
     for (frame, _), (filename, lineno, func_name, _) in zip(traceback.walk_tb(exc_tb), tb_details):
         function_details = extract_function_code(frame, lineno) if frame else "Function source not found."
-        
-        stack_info.append({
+  
+        stack_entry = {
             "exception.file": filename,
             "exception.line": lineno,
             "exception.function_name": func_name,
             "exception.function_body": function_details["function_code"],
             "exception.start_line": function_details["function_start_line"],
             "exception.end_line": function_details["function_end_line"],
-        })
+        }
+
+        # Check if the file is from site-packages
+        if "site-packages" in filename:
+            stack_entry["exception.is_file_internal"] = "true"
+        else:
+            stack_entry["exception.is_file_internal"] = "false"
+
+        stack_info.insert(0, stack_entry)  # Prepend instead of append
 
     # Determine if the exception is escaping
     current_exc = sys.exc_info()[1]  # Get the currently active exception
