@@ -168,6 +168,7 @@ def custom_record_exception(span: Span, exc: Exception):
         {
             "exception.type": str(exc_type.__name__),
             "exception.message": exc_value,
+            "exception.language": "python",
             "exception.stacktrace": traceback.format_exc(),
             "exception.escaped": exception_escaped,
             "exception.vcs.commit_sha": mw_vcs_commit_sha or "",
