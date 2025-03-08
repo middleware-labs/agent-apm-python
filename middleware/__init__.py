@@ -59,57 +59,70 @@ class ExceptionInstrumentor(BaseInstrumentor):
 ExceptionInstrumentor().instrument()
 
 # Automatic exception handling for flask
-from flask import Flask, request
-from flask.signals import got_request_exception, appcontext_pushed
-import traceback
+try:
+    from flask import Flask, request
+    from flask.signals import got_request_exception, appcontext_pushed
+except ImportError:
+    Flask = None
+    got_request_exception = None
+    appcontext_pushed = None
 
-def _capture_exception(sender, exception, **extra):
-    exc_type, exc_value, exc_traceback = sys.exc_info()  # Get exception details
-    if exc_type and exc_value and exc_traceback:
-        record_exception(exc_type, exc_value, exc_traceback)
-    else:
-        print("Unable to capture exception details.")
+if Flask and got_request_exception and appcontext_pushed:
+    def _capture_exception(sender, exception, **extra):
+        exc_type, exc_value, exc_traceback = sys.exc_info()  # Get exception details
+        if exc_type and exc_value and exc_traceback:
+            record_exception(exc_type, exc_value, exc_traceback)
+        else:
+            print("Unable to capture exception details.")
 
-def try_register_flask_handler(app: Flask):
-    """Registers the exception handler using Flask signals."""
-    got_request_exception.connect(_capture_exception, app)
-    print("✅ Flask error handler registered via signal.")
+    def try_register_flask_handler(app: Flask):
+        """Registers the exception handler using Flask signals."""
+        got_request_exception.connect(_capture_exception, app)
+        print("✅ Flask error handler registered via signal.")
 
-def _auto_register(sender, **extra):
-    """Automatically registers the handler when a Flask app context is pushed."""
-    try_register_flask_handler(sender)
+    def _auto_register(sender, **extra):
+        """Automatically registers the handler when a Flask app context is pushed."""
+        try_register_flask_handler(sender)
 
-# Connect to Flask's appcontext_pushed to register automatically
-appcontext_pushed.connect(_auto_register)
+    # Connect to Flask's appcontext_pushed to register automatically
+    appcontext_pushed.connect(_auto_register)
 
 
 # Automatic exception handling for FastAPI
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse
+try:
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.requests import Request
+    from starlette.responses import JSONResponse
+    from fastapi import FastAPI
+except ImportError:
+    BaseHTTPMiddleware = None
+    Request = None
+    JSONResponse = None
+    FastAPI = None
 
-class ExceptionMiddleware(BaseHTTPMiddleware):
-    """Middleware to catch unhandled exceptions globally."""
-    async def dispatch(self, request: Request, call_next):
-        try:
-            return await call_next(request)
-        except Exception as exc:
-            exc_type, exc_value, exc_traceback = exc.__class__, exc, exc.__traceback__
-            record_exception(exc_type, exc_value, exc_traceback)
+if BaseHTTPMiddleware and FastAPI:
+    class ExceptionMiddleware(BaseHTTPMiddleware):
+        """Middleware to catch unhandled exceptions globally."""
+        async def dispatch(self, request: Request, call_next):
+            try:
+                return await call_next(request)
+            except Exception as exc:
+                exc_type, exc_value, exc_traceback = exc.__class__, exc, exc.__traceback__
+                record_exception(exc_type, exc_value, exc_traceback)
+                
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": "Internal Server Error"},
+                )
             
-            return JSONResponse(
-                status_code=500,
-                content={"detail": "Internal Server Error"},
-            )
-        
-from fastapi import FastAPI
-# from starlette.middleware import ExceptionMiddleware
+    from fastapi import FastAPI
+    # from starlette.middleware import ExceptionMiddleware
 
-_original_init = FastAPI.__init__
+    _original_init = FastAPI.__init__
 
-def new_fastapi_init(self, *args, **kwargs):
-    _original_init(self, *args, **kwargs)
-    print("✅ FastAPI instance created, registering ExceptionMiddleware.")
-    self.add_middleware(ExceptionMiddleware)
+    def new_fastapi_init(self, *args, **kwargs):
+        _original_init(self, *args, **kwargs)
+        print("✅ FastAPI instance created, registering ExceptionMiddleware.")
+        self.add_middleware(ExceptionMiddleware)
 
-FastAPI.__init__ = new_fastapi_init
+    FastAPI.__init__ = new_fastapi_init
