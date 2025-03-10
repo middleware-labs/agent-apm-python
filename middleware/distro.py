@@ -164,7 +164,7 @@ def custom_record_exception(span: Span, exc: Exception):
     
     # Add extra details in the existing "exception" event
     span.add_event(
-        "exception",  
+        "exception-mw",  
         {
             "exception.type": str(exc_type.__name__),
             "exception.message": exc_value,
