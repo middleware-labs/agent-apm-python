@@ -91,19 +91,22 @@ def extract_function_code(tb_frame, lineno):
     try:
         source_lines, start_line = inspect.getsourcelines(tb_frame)
         end_line = start_line + len(source_lines) - 1
-        
+
         if len(source_lines) > 20:
             # Get 10 lines above and 10 below the exception line
             start_idx = max(0, lineno - start_line - 10)
             end_idx = min(len(source_lines), lineno - start_line + 10)
-            source_lines = source_lines[start_idx:end_idx]
+            source_lines = source_lines[(start_idx - 1):end_idx]
+
+            start_line = start_line + start_idx
+            end_line = start_line + end_idx
         
         function_code = "".join(source_lines)  # Convert to a string
         
         return {
             "function_code": function_code,
-            "function_start_line": start_line if len(source_lines) <= 20 else None,
-            "function_end_line": end_line if len(source_lines) <= 20 else None,
+            "function_start_line": start_line,
+            "function_end_line": end_line,
         }    
         
     except Exception as e:
