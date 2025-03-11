@@ -146,9 +146,9 @@ def custom_record_exception(span: Span, exc: Exception):
 
         # Check if the file is from site-packages
         if "site-packages" in filename:
-            stack_entry["exception.is_file_internal"] = "true"
+            stack_entry["exception.is_file_external"] = "true"
         else:
-            stack_entry["exception.is_file_internal"] = "false"
+            stack_entry["exception.is_file_external"] = "false"
 
         stack_info.insert(0, stack_entry)  # Prepend instead of append
 
