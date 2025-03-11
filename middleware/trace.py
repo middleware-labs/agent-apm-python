@@ -2,7 +2,7 @@ import grpc
 import sys
 import logging
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace import TracerProvider, SpanProcessor, ReadableSpan
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     SimpleSpanProcessor,
@@ -16,6 +16,39 @@ from middleware.sampler import configure_sampler
 
 _logger = logging.getLogger(__name__)
 
+class ExceptionFilteringSpanProcessor(SpanProcessor):
+    def on_start(self, span: ReadableSpan, parent_context):
+        pass
+
+    def on_end(self, span: ReadableSpan):
+        # Check if there is any "exception" event with "exception.stack_details"
+        has_stack_details = any(
+            event.name == "exception" and "exception.stack_details" in event.attributes
+            for event in span.events
+        )
+
+        if has_stack_details:
+            # Keep only the unique "exception" events based on "exception.stack_trace"
+            seen_stack_traces = set()
+            filtered_events = []
+            for event in span.events:
+                if event.name == "exception" and "exception.stack_details" in event.attributes:
+                    stack_trace = event.attributes.get("exception.stack_trace")
+                    seen_stack_traces.add(stack_trace)
+                    filtered_events.append(event)
+                elif event.name == "exception":
+                    stack_trace = event.attributes.get("exception.stack_trace")
+                    if stack_trace not in seen_stack_traces:
+                        filtered_events.append(event)
+                elif event.name != "exception":
+                    filtered_events.append(event)
+            span._events = filtered_events
+
+    def shutdown(self):
+        pass
+
+    def force_flush(self, timeout_millis=None):
+        pass
 
 def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProvider:
     """
@@ -41,6 +74,7 @@ def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProv
             exporter,
         )
     )
+    trace_provider.add_span_processor(ExceptionFilteringSpanProcessor())
     if options.console_exporter:
         output = sys.stdout
         if options.debug_log_file:
