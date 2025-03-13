@@ -1,11 +1,5 @@
-from middleware.distro import mw_tracker, custom_record_exception_wrapper
-from typing import Collection
-import sys
-import threading
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry import trace
+from middleware.distro import mw_tracker, custom_record_exception_wrapper, record_exception
 from opentelemetry.sdk.trace import Span
-from typing import Optional
 from middleware.options import (
     MWOptions,
     DETECT_AWS_BEANSTALK,
@@ -36,5 +30,4 @@ __all__ = [
     "DETECT_ENVVARS",
 ]
 
-tracer = trace.get_tracer(__name__)
 Span.record_exception = custom_record_exception_wrapper
