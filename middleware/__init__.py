@@ -1,9 +1,10 @@
-from middleware.distro import mw_tracker, record_exception
+from middleware.distro import mw_tracker, custom_record_exception_wrapper
 from typing import Collection
 import sys
 import threading
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry import trace
+from opentelemetry.sdk.trace import Span
 from typing import Optional
 from middleware.options import (
     MWOptions,
@@ -36,25 +37,4 @@ __all__ = [
 ]
 
 tracer = trace.get_tracer(__name__)
-
-# Hook for threading exceptions (Python 3.8+)
-def thread_excepthook(args):
-    record_exception(args.exc_type, args.exc_value, args.exc_traceback)
-
-class ExceptionInstrumentor(BaseInstrumentor):
-    def instrumentation_dependencies(self) -> Collection[str]:
-        """Return dependencies if this instrumentor requires any."""
-        return []
-    
-    def _instrument(self, **kwargs):
-        """Automatically sets sys.excepthook when the instrumentor is loaded."""
-        sys.excepthook = record_exception
-        threading.excepthook = thread_excepthook
-
-    def _uninstrument(self, **kwargs):
-        """Restores default sys.excepthook if needed."""
-        sys.excepthook = sys.__excepthook__
-
-# Load the instrumentor
-ExceptionInstrumentor().instrument()
-
+Span.record_exception = custom_record_exception_wrapper

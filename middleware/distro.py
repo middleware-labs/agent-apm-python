@@ -91,19 +91,22 @@ def extract_function_code(tb_frame, lineno):
     try:
         source_lines, start_line = inspect.getsourcelines(tb_frame)
         end_line = start_line + len(source_lines) - 1
-        
+
         if len(source_lines) > 20:
             # Get 10 lines above and 10 below the exception line
             start_idx = max(0, lineno - start_line - 10)
             end_idx = min(len(source_lines), lineno - start_line + 10)
-            source_lines = source_lines[start_idx:end_idx]
+            source_lines = source_lines[(start_idx - 1):end_idx]
+
+            start_line = start_line + start_idx
+            end_line = start_line + end_idx
         
         function_code = "".join(source_lines)  # Convert to a string
         
         return {
             "function_code": function_code,
-            "function_start_line": start_line if len(source_lines) <= 20 else None,
-            "function_end_line": end_line if len(source_lines) <= 20 else None,
+            "function_start_line": start_line,
+            "function_end_line": end_line,
         }    
         
     except Exception as e:
@@ -112,6 +115,31 @@ def extract_function_code(tb_frame, lineno):
             "function_start_line": None,
             "function_end_line": None
         }
+    
+_original_record_exception = Span.record_exception
+
+def custom_record_exception_wrapper(self: Span,
+                                    exception: BaseException,
+                                    attributes=None,
+                                    timestamp: int = None,
+                                    escaped: bool = False) -> None:
+    """
+    Custom wrapper for Span.record_exception.
+    This calls our custom_record_exception to add extra details before delegating
+    to the original record_exception method.
+    """
+    # Check for a recursion marker
+    if self.attributes.get("exception.is_recursion") == "true":
+        return _original_record_exception(self, exception, attributes, timestamp, escaped)
+
+    # Mark the span to prevent infinite recursion.
+    self.set_attribute("exception.is_recursion", "true")
+    
+    # Call our custom exception recording logic.
+    custom_record_exception(self, exception)
+    
+    # Optionally, call the original record_exception for default behavior.
+    return _original_record_exception(self, exception, attributes, timestamp, escaped)
 
 # Replacement of span.record_exception to include function source code
 def custom_record_exception(span: Span, exc: Exception):
@@ -119,14 +147,14 @@ def custom_record_exception(span: Span, exc: Exception):
     exc_type, exc_value, exc_tb = exc.__class__, str(exc), exc.__traceback__
 
     if exc_tb is None:
-        span.set_attribute("exception.warning", "No traceback available")
+        # span.set_attribute("exception.warning", "No traceback available")
         span.record_exception(exc)
         return
 
     tb_details = traceback.extract_tb(exc_tb)
     
     if not tb_details:
-        span.set_attribute("exception.warning", "Traceback is empty")
+        # span.set_attribute("exception.warning", "Traceback is empty")
         span.record_exception(exc)
         return
 
@@ -134,22 +162,30 @@ def custom_record_exception(span: Span, exc: Exception):
     
     for (frame, _), (filename, lineno, func_name, _) in zip(traceback.walk_tb(exc_tb), tb_details):
         function_details = extract_function_code(frame, lineno) if frame else "Function source not found."
-        
-        stack_info.append({
+  
+        stack_entry = {
             "exception.file": filename,
             "exception.line": lineno,
             "exception.function_name": func_name,
             "exception.function_body": function_details["function_code"],
             "exception.start_line": function_details["function_start_line"],
             "exception.end_line": function_details["function_end_line"],
-        })
+        }
+
+        # Check if the file is from site-packages
+        if "site-packages" in filename:
+            stack_entry["exception.is_file_external"] = "true"
+        else:
+            stack_entry["exception.is_file_external"] = "false"
+
+        stack_info.insert(0, stack_entry)  # Prepend instead of append
 
     # Determine if the exception is escaping
     current_exc = sys.exc_info()[1]  # Get the currently active exception
     exception_escaped = current_exc is exc  # True if it's still propagating
 
-    mw_git_repository_url = os.getenv("MW_GIT_REPOSITORY_URL")
-    mw_git_commit_sha = os.getenv("MW_GIT_COMMIT_SHA")
+    mw_vcs_repository_url = os.getenv("MW_VCS_REPOSITORY_URL")
+    mw_vcs_commit_sha = os.getenv("MW_VCS_COMMIT_SHA")
   
     # Serialize stack info as JSON string since OpenTelemetry only supports string values
     stack_info_str = json.dumps(stack_info, indent=2)
@@ -160,45 +196,16 @@ def custom_record_exception(span: Span, exc: Exception):
         {
             "exception.type": str(exc_type.__name__),
             "exception.message": exc_value,
+            "exception.language": "python",
             "exception.stacktrace": traceback.format_exc(),
             "exception.escaped": exception_escaped,
-            "exception.github.commit_sha": mw_git_commit_sha or "",
-            "exception.github.repository_url": mw_git_repository_url or "",
+            "exception.vcs.commit_sha": mw_vcs_commit_sha or "",
+            "exception.vcs.repository_url": mw_vcs_repository_url or "",
             "exception.stack_details": stack_info_str,  # Attach full stacktrace details
         }
     )
 
-def record_exception(exc_type: Type[BaseException], exc_value: BaseException, exc_traceback) -> None:
-    """
-    Reports an exception as a span event, creating a dummy span if necessary.
 
-    Args:
-        exc_type (Type[BaseException]): The type of the exception.
-        exc_value (BaseException): The exception instance.
-        exc_traceback: The traceback object.
-
-    Example
-    --------
-    >>> import sys
-    >>> try:
-    >>>     print("Divide by zero:", 1 / 0)
-    >>> except Exception as e:
-    >>>     sys.excepthook(*sys.exc_info())
-
-    """
-    # Retrieve the current span if available
-    span = get_current_span()
-    if span and span.is_recording():
-        custom_record_exception(span, exc_value)
-        return
-
-    # Create a new span if none is found
-    tracer: Tracer = get_tracer("mw-tracer")
-    span_name = exc_type.__name__ if exc_type else "UnknownException"
-
-    with tracer.start_span(span_name) as span:
-        custom_record_exception(span, exc_value)
-        span.set_status(Status(StatusCode.ERROR, str(exc_value)))
 
 
 # pylint: disable=too-few-public-methods
