@@ -11,7 +11,7 @@ from opentelemetry.sdk.trace.export import (
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.processor.baggage import ALLOW_ALL_BAGGAGE_KEYS, BaggageSpanProcessor
 from middleware.options import MWOptions
-from opentelemetry.trace import set_tracer_provider
+from opentelemetry.trace import set_tracer_provider, Span
 from middleware.sampler import configure_sampler
 
 _logger = logging.getLogger(__name__)
@@ -61,6 +61,9 @@ def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProv
     Returns:
         TracerProvider: the new tracer provider
     """
+    # from middleware.distro import custom_record_exception_wrapper
+    # Span.record_exception = custom_record_exception_wrapper
+
     exporter = OTLPSpanExporter(
         endpoint=options.target,
         compression=grpc.Compression.Gzip,
@@ -74,7 +77,7 @@ def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProv
             exporter,
         )
     )
-    trace_provider.add_span_processor(ExceptionFilteringSpanProcessor())
+    # trace_provider.add_span_processor(ExceptionFilteringSpanProcessor())
     if options.console_exporter:
         output = sys.stdout
         if options.debug_log_file:

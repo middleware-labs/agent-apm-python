@@ -115,6 +115,31 @@ def extract_function_code(tb_frame, lineno):
             "function_start_line": None,
             "function_end_line": None
         }
+    
+_original_record_exception = Span.record_exception
+
+def custom_record_exception_wrapper(self: Span,
+                                    exception: BaseException,
+                                    attributes=None,
+                                    timestamp: int = None,
+                                    escaped: bool = False) -> None:
+    """
+    Custom wrapper for Span.record_exception.
+    This calls our custom_record_exception to add extra details before delegating
+    to the original record_exception method.
+    """
+    # Check for a recursion marker
+    if self.attributes.get("exception.is_recursion") == "true":
+        return _original_record_exception(self, exception, attributes, timestamp, escaped)
+
+    # Mark the span to prevent infinite recursion.
+    self.set_attribute("exception.is_recursion", "true")
+    
+    # Call our custom exception recording logic.
+    custom_record_exception(self, exception)
+    
+    # Optionally, call the original record_exception for default behavior.
+    return _original_record_exception(self, exception, attributes, timestamp, escaped)
 
 # Replacement of span.record_exception to include function source code
 def custom_record_exception(span: Span, exc: Exception):
@@ -122,14 +147,14 @@ def custom_record_exception(span: Span, exc: Exception):
     exc_type, exc_value, exc_tb = exc.__class__, str(exc), exc.__traceback__
 
     if exc_tb is None:
-        span.set_attribute("exception.warning", "No traceback available")
+        # span.set_attribute("exception.warning", "No traceback available")
         span.record_exception(exc)
         return
 
     tb_details = traceback.extract_tb(exc_tb)
     
     if not tb_details:
-        span.set_attribute("exception.warning", "Traceback is empty")
+        # span.set_attribute("exception.warning", "Traceback is empty")
         span.record_exception(exc)
         return
 
@@ -180,37 +205,7 @@ def custom_record_exception(span: Span, exc: Exception):
         }
     )
 
-def record_exception(exc_type: Type[BaseException], exc_value: BaseException, exc_traceback) -> None:
-    """
-    Reports an exception as a span event, creating a dummy span if necessary.
 
-    Args:
-        exc_type (Type[BaseException]): The type of the exception.
-        exc_value (BaseException): The exception instance.
-        exc_traceback: The traceback object.
-
-    Example
-    --------
-    >>> import sys
-    >>> try:
-    >>>     print("Divide by zero:", 1 / 0)
-    >>> except Exception as e:
-    >>>     sys.excepthook(*sys.exc_info())
-
-    """
-    # Retrieve the current span if available
-    span = get_current_span()
-    if span and span.is_recording():
-        custom_record_exception(span, exc_value)
-        return
-
-    # Create a new span if none is found
-    tracer: Tracer = get_tracer("mw-tracer")
-    span_name = exc_type.__name__ if exc_type else "UnknownException"
-
-    with tracer.start_span(span_name) as span:
-        custom_record_exception(span, exc_value)
-        span.set_status(Status(StatusCode.ERROR, str(exc_value)))
 
 
 # pylint: disable=too-few-public-methods
