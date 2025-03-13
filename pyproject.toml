@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "middleware-io"
-version = "2.1.2rc14"
+version = "2.1.2rc15"
 requires-python = ">=3.8"
 description = "Middleware's APM tool enables Python developers to effortlessly monitor their applications, gathering distributed tracing, metrics, logs, and profiling data for valuable insights and performance optimization."
 authors = [{ name = "middleware-dev" }]

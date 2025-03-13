@@ -13,7 +13,8 @@ from middleware.trace import create_tracer_provider
 from middleware.log import create_logger_handler
 from middleware.profiler import collect_profiling
 from opentelemetry import trace
-from opentelemetry.trace import Tracer, get_current_span, get_tracer, Span, get_tracer, Status, StatusCode
+from opentelemetry.trace import Tracer, get_current_span, get_tracer, get_tracer, Status, StatusCode
+from opentelemetry.sdk.trace import Span
 import os
 import json
 
@@ -85,6 +86,39 @@ def mw_tracker(
         collect_profiling(options)    
 
     mw_tracker_called = True
+
+def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
+    """
+    Reports an exception as a span event creating a dummy span if necessary.
+
+    Args:
+        exc (Exception): Pass Exception to record as in a current span.
+        span_name (String,Optional): Span Name to use if no current span found,
+                                     defaults to Exception Name.
+
+    Example
+    --------
+    >>> from middleware import record_exception
+    >>> try:
+    >>>     print("Divide by zero:",1/0)
+    >>> except Exception as e:
+    >>>     record_exception(e)
+
+    """
+
+    span = get_current_span()
+    if span.is_recording():
+        span.record_exception(exc)
+        return
+
+    tracer: Tracer = get_tracer("mw-tracer")
+    if span_name is None:
+        span_name = type(exc).__name__
+
+    span = tracer.start_span(span_name)
+    span.record_exception(exc)
+    span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
+    span.end()
 
 def extract_function_code(tb_frame, lineno):
     """Extracts the full function body where the exception occurred."""

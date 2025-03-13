@@ -77,7 +77,7 @@ def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProv
             exporter,
         )
     )
-    # trace_provider.add_span_processor(ExceptionFilteringSpanProcessor())
+    trace_provider.add_span_processor(ExceptionFilteringSpanProcessor())
     if options.console_exporter:
         output = sys.stdout
         if options.debug_log_file:
