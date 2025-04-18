@@ -123,34 +123,43 @@ def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
 def extract_function_code(tb_frame, lineno):
     """Extracts the full function body where the exception occurred."""
     try:
+        # Get the source lines and the starting line number of the function
         source_lines, start_line = inspect.getsourcelines(tb_frame)
         end_line = start_line + len(source_lines) - 1
 
+        # If the function body is too long, limit the number of lines
         if len(source_lines) > 20:
-            # Get 10 lines above and 10 below the exception line
-            start_idx = max(0, lineno - start_line - 10)
-            end_idx = min(len(source_lines), lineno - start_line + 10)
-            source_lines = source_lines[(start_idx - 1):end_idx]
+            # Define the number of lines to show before and after the exception line
+            lines_before = 10
+            lines_after = 10
 
-            start_line = start_line + start_idx
-            end_line = start_line + end_idx
-        
-        function_code = "".join(source_lines)  # Convert to a string
-        
+            # Calculate the start and end indices for slicing
+            start_idx = max(0, lineno - start_line - lines_before)
+            end_idx = min(len(source_lines), lineno - start_line + lines_after)
+
+            # Extract the relevant lines
+            source_lines = source_lines[start_idx:end_idx]
+
+            # Adjust the start and end line numbers
+            start_line += start_idx
+            end_line = start_line + len(source_lines) - 1
+
+        # Convert the list of lines to a single string
+        function_code = "".join(source_lines)
+
         return {
             "function_code": function_code,
             "function_start_line": start_line,
             "function_end_line": end_line,
-        }    
-        
+        }
+
     except Exception as e:
+        # Handle cases where the source code cannot be extracted
         return {
             "function_code": f"Error extracting function code: {e}",
             "function_start_line": None,
-            "function_end_line": None
+            "function_end_line": None,
         }
-    
-_original_record_exception = Span.record_exception
 
 def custom_record_exception_wrapper(self: Span,
                                     exception: BaseException,
