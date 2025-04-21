@@ -1,4 +1,5 @@
-from middleware.distro import mw_tracker, record_exception
+from middleware.distro import mw_tracker, custom_record_exception_wrapper, record_exception
+from opentelemetry.sdk.trace import Span
 from middleware.options import (
     MWOptions,
     DETECT_AWS_BEANSTALK,
@@ -28,3 +29,5 @@ __all__ = [
     "DETECT_GCP",
     "DETECT_ENVVARS",
 ]
+
+Span.record_exception = custom_record_exception_wrapper

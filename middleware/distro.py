@@ -1,4 +1,8 @@
 import logging
+import inspect
+import traceback
+from typing import Optional, Type
+import sys
 from logging import getLogger
 from typing import Optional
 from opentelemetry.instrumentation.distro import BaseDistro
@@ -9,7 +13,10 @@ from middleware.trace import create_tracer_provider
 from middleware.log import create_logger_handler
 from middleware.profiler import collect_profiling
 from opentelemetry import trace
-from opentelemetry.trace import Tracer, get_current_span, get_tracer
+from opentelemetry.trace import Tracer, get_current_span, get_tracer, get_tracer, Status, StatusCode
+from opentelemetry.sdk.trace import Span
+import os
+import json
 
 _logger = getLogger(__name__)
 
@@ -80,7 +87,6 @@ def mw_tracker(
 
     mw_tracker_called = True
 
-
 def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
     """
     Reports an exception as a span event creating a dummy span if necessary.
@@ -113,6 +119,136 @@ def record_exception(exc: Exception, span_name: Optional[str] = None) -> None:
     span.record_exception(exc)
     span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
     span.end()
+
+def extract_function_code(tb_frame, lineno):
+    """Extracts the full function body where the exception occurred."""
+    try:
+        # Get the source lines and the starting line number of the function
+        source_lines, start_line = inspect.getsourcelines(tb_frame)
+        end_line = start_line + len(source_lines) - 1
+
+        # If the function body is too long, limit the number of lines
+        if len(source_lines) > 20:
+            # Define the number of lines to show before and after the exception line
+            lines_before = 10
+            lines_after = 10
+
+            # Calculate the start and end indices for slicing
+            start_idx = max(0, lineno - start_line - lines_before)
+            end_idx = min(len(source_lines), lineno - start_line + lines_after)
+
+            # Extract the relevant lines
+            source_lines = source_lines[start_idx:end_idx]
+
+            # Adjust the start and end line numbers
+            start_line += start_idx
+            end_line = start_line + len(source_lines) - 1
+
+        # Convert the list of lines to a single string
+        function_code = "".join(source_lines)
+
+        return {
+            "function_code": function_code,
+            "function_start_line": start_line,
+            "function_end_line": end_line,
+        }
+
+    except Exception as e:
+        # Handle cases where the source code cannot be extracted
+        return {
+            "function_code": f"Error extracting function code: {e}",
+            "function_start_line": None,
+            "function_end_line": None,
+        }
+
+def custom_record_exception_wrapper(self: Span,
+                                    exception: BaseException,
+                                    attributes=None,
+                                    timestamp: int = None,
+                                    escaped: bool = False) -> None:
+    """
+    Custom wrapper for Span.record_exception.
+    This calls our custom_record_exception to add extra details before delegating
+    to the original record_exception method.
+    """
+    # Check for a recursion marker
+    if self.attributes.get("exception.is_recursion") == "true":
+        return _original_record_exception(self, exception, attributes, timestamp, escaped)
+
+    # Mark the span to prevent infinite recursion.
+    self.set_attribute("exception.is_recursion", "true")
+    
+    # Call our custom exception recording logic.
+    custom_record_exception(self, exception)
+    
+    # Optionally, call the original record_exception for default behavior.
+    return _original_record_exception(self, exception, attributes, timestamp, escaped)
+
+# Replacement of span.record_exception to include function source code
+def custom_record_exception(span: Span, exc: Exception):
+    """Custom exception recording that captures function source code."""
+    exc_type, exc_value, exc_tb = exc.__class__, str(exc), exc.__traceback__
+
+    if exc_tb is None:
+        # span.set_attribute("exception.warning", "No traceback available")
+        span.record_exception(exc)
+        return
+
+    tb_details = traceback.extract_tb(exc_tb)
+    
+    if not tb_details:
+        # span.set_attribute("exception.warning", "Traceback is empty")
+        span.record_exception(exc)
+        return
+
+    stack_info = []
+    
+    for (frame, _), (filename, lineno, func_name, _) in zip(traceback.walk_tb(exc_tb), tb_details):
+        function_details = extract_function_code(frame, lineno) if frame else "Function source not found."
+  
+        stack_entry = {
+            "exception.file": filename,
+            "exception.line": lineno,
+            "exception.function_name": func_name,
+            "exception.function_body": function_details["function_code"],
+            "exception.start_line": function_details["function_start_line"],
+            "exception.end_line": function_details["function_end_line"],
+        }
+
+        # Check if the file is from site-packages
+        if "site-packages" in filename:
+            stack_entry["exception.is_file_external"] = "true"
+        else:
+            stack_entry["exception.is_file_external"] = "false"
+
+        stack_info.insert(0, stack_entry)  # Prepend instead of append
+
+    # Determine if the exception is escaping
+    current_exc = sys.exc_info()[1]  # Get the currently active exception
+    exception_escaped = current_exc is exc  # True if it's still propagating
+
+    mw_vcs_repository_url = os.getenv("MW_VCS_REPOSITORY_URL")
+    mw_vcs_commit_sha = os.getenv("MW_VCS_COMMIT_SHA")
+  
+    # Serialize stack info as JSON string since OpenTelemetry only supports string values
+    stack_info_str = json.dumps(stack_info, indent=2)
+    
+    # Add extra details in the existing "exception" event
+    span.add_event(
+        "exception",  
+        {
+            "exception.type": str(exc_type.__name__),
+            "exception.message": exc_value,
+            "exception.language": "python",
+            "exception.stacktrace": traceback.format_exc(),
+            "exception.escaped": exception_escaped,
+            "exception.vcs.commit_sha": mw_vcs_commit_sha or "",
+            "exception.vcs.repository_url": mw_vcs_repository_url or "",
+            "exception.stack_details": stack_info_str,  # Attach full stacktrace details
+        }
+    )
+
+
 
 
 # pylint: disable=too-few-public-methods
