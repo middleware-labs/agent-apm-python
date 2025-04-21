@@ -61,8 +61,6 @@ def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProv
     Returns:
         TracerProvider: the new tracer provider
     """
-    # from middleware.distro import custom_record_exception_wrapper
-    # Span.record_exception = custom_record_exception_wrapper
 
     exporter = OTLPSpanExporter(
         endpoint=options.target,
