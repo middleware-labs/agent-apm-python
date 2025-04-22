@@ -161,6 +161,8 @@ def extract_function_code(tb_frame, lineno):
             "function_end_line": None,
         }
 
+_original_record_exception = Span.record_exception
+
 def custom_record_exception_wrapper(self: Span,
                                     exception: BaseException,
                                     attributes=None,
