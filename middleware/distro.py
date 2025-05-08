@@ -244,8 +244,6 @@ def custom_record_exception(span: Span, exc: Exception):
             "exception.language": "python",
             "exception.stacktrace": traceback.format_exc(),
             "exception.escaped": exception_escaped,
-            "exception.vcs.commit_sha": mw_vcs_commit_sha or "",
-            "exception.vcs.repository_url": mw_vcs_repository_url or "",
             "exception.stack_details": stack_info_str,  # Attach full stacktrace details
         }
     )

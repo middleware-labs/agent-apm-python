@@ -12,6 +12,7 @@ from middleware.options import MWOptions
 from middleware.detectors.detector import process_detector_input, get_detectors
 from middleware.version import __version__
 import typing
+import os
 
 _logger = getLogger(__name__)
 
@@ -53,6 +54,14 @@ def create_resource(options: MWOptions):
             _logger.warning(
                 "Skipped Custom attributes: parsing error expected format `abcd=1234,wxyz=5678`"
             )
+
+    mw_vcs_repository_url = os.getenv("MW_VCS_REPOSITORY_URL")
+    mw_vcs_commit_sha = os.getenv("MW_VCS_COMMIT_SHA")
+
+    if mw_vcs_repository_url:
+        attributes["vcs.repository_url"] = mw_vcs_repository_url
+    if mw_vcs_commit_sha:
+        attributes["vcs.commit_sha"] = mw_vcs_commit_sha
 
     detectors: typing.List["ResourceDetector"] = [
         OTELResourceDetector(),
