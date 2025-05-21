@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "middleware-io"
-version = "2.2.2rc1"
+version = "2.3.0"
 requires-python = ">=3.8"
 description = "Middleware's APM tool enables Python developers to effortlessly monitor their applications, gathering distributed tracing, metrics, logs, and profiling data for valuable insights and performance optimization."
 authors = [{ name = "middleware-dev" }]
@@ -40,6 +40,7 @@ dependencies =[
     "opentelemetry-resource-detector-azure==0.1.5",
     "opentelemetry-resourcedetector-gcp==1.7.0a0",
     "opentelemetry-resourcedetector-docker==0.4.0",
+    "gitpython>=3.1.0",
     
     "opentelemetry-instrumentation-aio-pika==0.48b0",
     "opentelemetry-instrumentation-aiohttp-client==0.48b0",

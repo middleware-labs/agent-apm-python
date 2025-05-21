@@ -13,6 +13,7 @@ from middleware.detectors.detector import process_detector_input, get_detectors
 from middleware.version import __version__
 import typing
 import os
+import git
 
 _logger = getLogger(__name__)
 
@@ -58,6 +59,15 @@ def create_resource(options: MWOptions):
     mw_vcs_repository_url = os.getenv("MW_VCS_REPOSITORY_URL")
     mw_vcs_commit_sha = os.getenv("MW_VCS_COMMIT_SHA")
 
+    # Fallback to git if env vars are missing (independent logic, single Repo call)
+    git_url, git_sha = None, None
+    if not mw_vcs_repository_url or not mw_vcs_commit_sha:
+        git_url, git_sha = get_git_info()
+    if not mw_vcs_repository_url and git_url:
+        mw_vcs_repository_url = git_url
+    if not mw_vcs_commit_sha and git_sha:
+        mw_vcs_commit_sha = git_sha
+
     if mw_vcs_repository_url:
         attributes["vcs.repository_url"] = mw_vcs_repository_url
     if mw_vcs_commit_sha:
@@ -79,3 +89,19 @@ def create_resource(options: MWOptions):
         initial_resource=Resource.create(attributes),
     )
     return resources
+
+
+def get_git_info():
+    """
+    Returns (repository_url, commit_sha) from the local .git directory.
+    Returns (None, None) if not a git repo or info unavailable.
+    """
+    try:
+        repo = git.Repo(search_parent_directories=True)
+        commit_sha = repo.head.commit.hexsha
+        remote_url = None
+        if repo.remotes:
+            remote_url = repo.remotes.origin.url
+        return remote_url, commit_sha
+    except Exception:
+        return None, None
