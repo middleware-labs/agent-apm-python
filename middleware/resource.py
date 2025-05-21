@@ -102,6 +102,8 @@ def get_git_info():
         remote_url = None
         if repo.remotes:
             remote_url = repo.remotes.origin.url
+            if remote_url and remote_url.endswith('.git'):
+                remote_url = remote_url[:-4]
         return remote_url, commit_sha
     except Exception:
         return None, None
