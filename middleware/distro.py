@@ -246,7 +246,9 @@ def custom_record_exception(span: Span, exc: Exception):
     )
 
 
-
+def configure(**kwargs):
+    distro = MiddlewareDistro()
+    distro._configure(**kwargs)
 
 # pylint: disable=too-few-public-methods
 class MiddlewareDistro(BaseDistro):
