@@ -75,6 +75,7 @@ def mw_tracker(
 
     _logger.debug(vars(options))
     resource = create_resource(options)
+    _logger.debug(f"Resource:{resource}")
     if options.collect_traces:
         create_tracer_provider(options, resource)
     if options.collect_metrics:
@@ -246,7 +247,11 @@ def custom_record_exception(span: Span, exc: Exception):
     )
 
 
-
+def configure(options: Optional[MWOptions] = None):
+    global isTracker, distro_called
+    distro_called = True
+    if not isTracker:
+        mw_tracker(options=options)
 
 # pylint: disable=too-few-public-methods
 class MiddlewareDistro(BaseDistro):

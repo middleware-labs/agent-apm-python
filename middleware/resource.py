@@ -29,6 +29,7 @@ def create_resource(options: MWOptions):
     Returns:
         Resource: the new Resource
     """
+    _logger.debug(f"Service name:{options.service_name}")
     attributes = {
         "service.name": options.service_name,
         "mw.sdk.version": __version__,
