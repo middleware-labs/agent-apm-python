@@ -257,7 +257,7 @@ opentelemetry-propagator-aws-xray==1.0.2
     #   opentelemetry-instrumentation-botocore
 opentelemetry-propagator-b3==1.27.0
     # via middleware-io (pyproject.toml)
-opentelemetry-propagator-gcp==1.7.0
+opentelemetry-propagator-gcp==1.9.0
     # via middleware-io (pyproject.toml)
 opentelemetry-propagator-jaeger==1.27.0
     # via middleware-io (pyproject.toml)
@@ -272,7 +272,7 @@ opentelemetry-resource-detector-azure==0.1.5
     # via middleware-io (pyproject.toml)
 opentelemetry-resourcedetector-docker==0.4.0
     # via middleware-io (pyproject.toml)
-opentelemetry-resourcedetector-gcp==1.7.0a0
+opentelemetry-resourcedetector-gcp==1.9.0a0
     # via middleware-io (pyproject.toml)
 opentelemetry-sdk==1.27.0
     # via

@@ -29,7 +29,7 @@ isTracker = parse_bool(
 )
 
 
-def mw_tracker(
+def mw_tracker_internal(
     options: Optional[MWOptions] = None,
 ):
     """
@@ -42,8 +42,8 @@ def mw_tracker(
 
     Example
     --------
-    >>> from middleware import mw_tracker, MWOptions, record_exception, DETECT_AWS_EC2
-    >>> mw_tracker(
+    >>> from middleware import mw_tracker_internal, MWOptions, record_exception, DETECT_AWS_EC2
+    >>> mw_tracker_internal(
     >>>     MWOptions(
     >>>         access_token="whkvkobudfitutobptgonaezuxpjjypnejbb",
     >>>         target="https://myapp.middleware.io:443",
@@ -63,11 +63,11 @@ def mw_tracker(
         return
     if not isTracker and mw_tracker_called:
         _logger.warning(
-            "Skipping mw_tracker config: `export MW_TRACKER=True` to use config settings"
+            "Skipping mw_tracker_internal config: `export MW_TRACKER=True` to use config settings"
         )
         return
     if isTracker and mw_tracker_called:
-        _logger.warning("Skipping mw_tracker config: overriding of config not allowed")
+        _logger.warning("Skipping mw_tracker_internal config: overriding of config not allowed")
         return
 
     if options is None:
@@ -246,7 +246,11 @@ def custom_record_exception(span: Span, exc: Exception):
     )
 
 
-
+def mw_tracker(options: Optional[MWOptions] = None):
+    global isTracker, distro_called
+    if not distro_called and isTracker:
+        distro_called = True
+        mw_tracker_internal(options=options)
 
 # pylint: disable=too-few-public-methods
 class MiddlewareDistro(BaseDistro):
@@ -258,7 +262,7 @@ class MiddlewareDistro(BaseDistro):
 
     This class doesn't need to be touched directly when using the distro. If
     you'd like to explicitly set configuration in code, use the
-    mw_tracker() function above with `export MW_TRACKER=True`.
+    mw_tracker_internal() function above with `export MW_TRACKER=True`.
 
     [tool.poetry.plugins."opentelemetry_distro"]
     distro = "middleware.opentelemetry.distro:MiddlewareDistro"
@@ -268,4 +272,4 @@ class MiddlewareDistro(BaseDistro):
         global isTracker, distro_called
         distro_called = True
         if not isTracker:
-            mw_tracker()
+            mw_tracker_internal()
