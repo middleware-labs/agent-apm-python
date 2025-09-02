@@ -29,7 +29,7 @@ isTracker = parse_bool(
 )
 
 
-def mw_tracker(
+def mw_tracker_internal(
     options: Optional[MWOptions] = None,
 ):
     """
@@ -246,7 +246,35 @@ def custom_record_exception(span: Span, exc: Exception):
     )
 
 
+def mw_tracker(options: Optional[MWOptions] = None):
+    """
+    Configures the OpenTelemetry SDK to send telemetry to middleware.
 
+    Args:
+        options (MWOptions, optional): the MWOptions used to
+        configure the the SDK. These options can be set either as parameters
+        to this function or through environment variables
+
+    Example
+    --------
+    >>> from middleware import mw_tracker, MWOptions, record_exception, DETECT_AWS_EC2
+    >>> mw_tracker(
+    >>>     MWOptions(
+    >>>         access_token="whkvkobudfitutobptgonaezuxpjjypnejbb",
+    >>>         target="https://myapp.middleware.io:443",
+    >>>         console_exporter=True,
+    >>>         debug_log_file=True,
+    >>>         service_name="MyPythonServer",
+    >>>         otel_propagators = "b3,tracecontext",
+    >>>         custom_resource_attributes="call_id=12345678, request_id=987654321",
+    >>>         detectors=[DETECT_AWS_EC2]
+    >>>     )
+    >>> )
+
+    """
+    global isTracker
+    if isTracker:
+        mw_tracker_internal(options=options)
 
 # pylint: disable=too-few-public-methods
 class MiddlewareDistro(BaseDistro):
@@ -268,4 +296,4 @@ class MiddlewareDistro(BaseDistro):
         global isTracker, distro_called
         distro_called = True
         if not isTracker:
-            mw_tracker()
+            mw_tracker_internal()
