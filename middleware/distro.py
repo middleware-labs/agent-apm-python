@@ -5,6 +5,8 @@ from typing import Optional, Type
 import sys
 from logging import getLogger
 from typing import Optional
+
+import pkg_resources
 from opentelemetry.instrumentation.distro import BaseDistro
 from middleware.metrics import create_meter_provider
 from middleware.options import MWOptions, parse_bool
@@ -29,7 +31,7 @@ isTracker = parse_bool(
 )
 
 
-def mw_tracker(
+def mw_tracker_internal(
     options: Optional[MWOptions] = None,
 ):
     """
@@ -246,7 +248,48 @@ def custom_record_exception(span: Span, exc: Exception):
     )
 
 
+def mw_tracker(options: Optional[MWOptions] = None):
+    """
+    Configures the OpenTelemetry SDK to send telemetry to middleware.
 
+    Args:
+        options (MWOptions, optional): the MWOptions used to
+        configure the the SDK. These options can be set either as parameters
+        to this function or through environment variables
+
+    Example
+    --------
+    >>> from middleware import mw_tracker, MWOptions, record_exception, DETECT_AWS_EC2
+    >>> mw_tracker(
+    >>>     MWOptions(
+    >>>         access_token="whkvkobudfitutobptgonaezuxpjjypnejbb",
+    >>>         target="https://myapp.middleware.io:443",
+    >>>         console_exporter=True,
+    >>>         debug_log_file=True,
+    >>>         service_name="MyPythonServer",
+    >>>         otel_propagators = "b3,tracecontext",
+    >>>         custom_resource_attributes="call_id=12345678, request_id=987654321",
+    >>>         detectors=[DETECT_AWS_EC2]
+    >>>     )
+    >>> )
+
+    """
+    global isTracker
+    if isTracker:
+        # 1. Load the distro
+        distro = MiddlewareDistro()
+        distro._configure(options=options)
+        # 2. Auto-instrument all registered instrumentors
+        for entry_point in pkg_resources.iter_entry_points("middleware_instrumentor"):
+            try:
+                instrumentor_class = entry_point.load()
+                instrumentor = instrumentor_class()
+                # Check if already instrumented (safe access)
+                if instrumentor._is_instrumented_by_opentelemetry:
+                    continue
+                instrumentor.instrument()
+            except Exception as e:
+                pass
 
 # pylint: disable=too-few-public-methods
 class MiddlewareDistro(BaseDistro):
@@ -264,8 +307,10 @@ class MiddlewareDistro(BaseDistro):
     distro = "middleware.opentelemetry.distro:MiddlewareDistro"
     """
 
-    def _configure(self, **kwargs):
+    def _configure(self, options: Optional[MWOptions] = None, **kwargs):
         global isTracker, distro_called
         distro_called = True
         if not isTracker:
-            mw_tracker()
+            mw_tracker_internal()
+        elif isTracker and options is not None:
+            mw_tracker_internal(options=options)
