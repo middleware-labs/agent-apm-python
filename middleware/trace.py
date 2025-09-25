@@ -1,4 +1,4 @@
-import grpc
+# import grpc
 import sys
 import logging
 from opentelemetry.sdk.resources import Resource
@@ -8,7 +8,7 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
     ConsoleSpanExporter,
 )
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.processor.baggage import ALLOW_ALL_BAGGAGE_KEYS, BaggageSpanProcessor
 from middleware.options import MWOptions
 from opentelemetry.trace import set_tracer_provider, Span
@@ -64,7 +64,7 @@ def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProv
 
     exporter = OTLPSpanExporter(
         endpoint=options.target,
-        compression=grpc.Compression.Gzip,
+        # compression=grpc.Compression.Gzip,
     )
     trace_provider = TracerProvider(
         resource=resource, shutdown_on_exit=True, sampler=configure_sampler(options)

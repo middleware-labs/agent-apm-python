@@ -1,8 +1,8 @@
-import grpc
+# import grpc
 import sys
 import logging
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
+from opentelemetry.exporter.otlp.proto.http._log_exporter import (
     OTLPLogExporter,
 )
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
@@ -31,7 +31,7 @@ def create_logger_handler(options: MWOptions, resource: Resource) -> LoggingHand
     """
     exporter = OTLPLogExporter(
         endpoint=options.target,
-        compression=grpc.Compression.Gzip,
+        # compression=grpc.Compression.Gzip,
     )
     logger_provider = LoggerProvider(resource=resource, shutdown_on_exit=True)
     logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
