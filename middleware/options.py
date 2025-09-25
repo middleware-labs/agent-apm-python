@@ -266,7 +266,7 @@ class MWOptions:
             OTEL_EXPORTER_OTLP_ENDPOINT, os.environ.get(MW_TARGET, target)
         )
 
-        if "https" not in self.target:
+        if "http" not in self.target:
             self.mw_agent_service = os.environ.get(MW_AGENT_SERVICE, mw_agent_service)
             if self.mw_agent_service is not None:
                 self.target = f"http://{self.mw_agent_service}:{DEFAULT_PORT}"
