@@ -63,7 +63,7 @@ def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProv
     """
 
     exporter = OTLPSpanExporter(
-        endpoint=options.target,
+        endpoint=options.target + "/v1/traces",
         # compression=grpc.Compression.Gzip,
     )
     trace_provider = TracerProvider(

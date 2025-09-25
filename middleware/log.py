@@ -30,7 +30,7 @@ def create_logger_handler(options: MWOptions, resource: Resource) -> LoggingHand
         LoggerProvider: the new logger provider
     """
     exporter = OTLPLogExporter(
-        endpoint=options.target,
+        endpoint=options.target + "/v1/logs",
         # compression=grpc.Compression.Gzip,
     )
     logger_provider = LoggerProvider(resource=resource, shutdown_on_exit=True)

@@ -36,7 +36,7 @@ def create_meter_provider(options: MWOptions, resource: Resource):
     """
 
     exporter = OTLPMetricExporter(
-        endpoint=options.target,
+        endpoint=options.target + "/v1/metrics",
         # compression=grpc.Compression.Gzip,
     )
     readers = [PeriodicExportingMetricReader(exporter)]
