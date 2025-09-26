@@ -9,6 +9,7 @@ from opentelemetry.sdk.environment_variables import (
 from middleware.detectors.detector import Detector, process_detector_input
 from typing import Union, List
 from middleware.version import __version__
+
 # Environment Variable Names
 OTEL_SERVICE_VERSION = "OTEL_SERVICE_VERSION"
 DEBUG = "DEBUG"
@@ -266,10 +267,20 @@ class MWOptions:
             OTEL_EXPORTER_OTLP_ENDPOINT, os.environ.get(MW_TARGET, target)
         )
 
-        if "http" not in self.target:
-            self.mw_agent_service = os.environ.get(MW_AGENT_SERVICE, mw_agent_service)
-            if self.mw_agent_service is not None:
-                self.target = f"http://{self.mw_agent_service}:{DEFAULT_PORT}"
+        if "https" not in self.target:
+            # Special case: Kubernetes Python auto-instrumentation
+            if os.environ.get("MW_K8S_PYTHON_INSTRUMENTATION") == "true":
+                # Only set the service name, don't modify self.target
+                self.mw_agent_service = os.environ.get(
+                    MW_AGENT_SERVICE, mw_agent_service
+                )
+            else:
+                # Default behavior
+                self.mw_agent_service = os.environ.get(
+                    MW_AGENT_SERVICE, mw_agent_service
+                )
+                if self.mw_agent_service is not None:
+                    self.target = f"http://{self.mw_agent_service}:{DEFAULT_PORT}"
 
         self.custom_resource_attributes = os.environ.get(
             MW_CUSTOM_RESOURCE_ATTRIBUTES, custom_resource_attributes
@@ -278,7 +289,7 @@ class MWOptions:
         self.otel_propagators = os.environ.get(
             OTEL_PROPAGATORS, os.environ.get(MW_PROPAGATORS, otel_propagators)
         )
-        os.environ["OTEL_PROPAGATORS"] = self.otel_propagators    
+        os.environ["OTEL_PROPAGATORS"] = self.otel_propagators
         self.console_exporter = parse_bool(MW_CONSOLE_EXPORTER, console_exporter)
         self.debug_log_file = parse_bool(MW_DEBUG_LOG_FILE, debug_log_file)
         self.project_name = os.environ.get(MW_PROJECT_NAME, project_name)
@@ -286,6 +297,7 @@ class MWOptions:
         self.detectors = os.environ.get(MW_DETECTORS, detectors)
         _health_check(options=self)
         _get_instrument_info(options=self)
+
 
 def parse_bool(
     environment_variable: str, default_value: bool, error_message: str = None
@@ -345,8 +357,9 @@ def parse_int(
     else:
         return default_value
 
+
 def _health_check(options: MWOptions):
-    if options.target == "" or ("https" not in options.target) :
+    if options.target == "" or ("https" not in options.target):
         try:
             response = requests.get(
                 f"http://{options.mw_agent_service}:13133/healthcheck", timeout=5
@@ -356,7 +369,10 @@ def _health_check(options: MWOptions):
                     "MW Agent Health Check is failing ...\nThis could be due to incorrect value of MW_AGENT_SERVICE\nIgnore the warning if you are using MW Agent older than 1.7.7 (You can confirm by running `mw-agent version`)"
                 )
         except requests.exceptions.RequestException as e:
-            _logger.warning(f"MW Agent Health Check is failing ...\nException while MW Agent Health Check:{e}")
+            _logger.warning(
+                f"MW Agent Health Check is failing ...\nException while MW Agent Health Check:{e}"
+            )
+
 
 def _get_instrument_info(options: MWOptions):
     _logger.debug(
