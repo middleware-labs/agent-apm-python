@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "middleware-io"
+name = "middleware-io-k8s"
 version = "2.4.1rc25"
 requires-python = ">=3.8"
 description = "Middleware's APM tool enables Python developers to effortlessly monitor their applications, gathering distributed tracing, metrics, logs, and profiling data for valuable insights and performance optimization."
@@ -22,7 +22,7 @@ keywords = [
 dependencies =[
     "distro==1.9.0",
     "opentelemetry-api==1.36.0",
-    "opentelemetry-exporter-otlp-proto-grpc==1.36.0",
+    "opentelemetry-exporter-otlp-proto-http==1.36.0",
     "opentelemetry-instrumentation==0.57b0",
     "opentelemetry-proto==1.36.0",
     "opentelemetry-sdk==1.36.0",

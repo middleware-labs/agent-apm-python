@@ -17,7 +17,8 @@ from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,
     ConsoleMetricExporter,
 )
-from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from middleware.exporter_config import create_metric_exporter
+
 from middleware.options import MWOptions
 
 _logger = logging.getLogger(__name__)
@@ -34,11 +35,8 @@ def create_meter_provider(options: MWOptions, resource: Resource):
     Returns:
         MeterProvider: the new meter provider
     """
-
-    exporter = OTLPMetricExporter(
-        endpoint=options.target + "/v1/metrics",
-        # compression=grpc.Compression.Gzip,
-    )
+    exporter = create_metric_exporter(options.target)
+    
     readers = [PeriodicExportingMetricReader(exporter)]
     if options.console_exporter:
         output = sys.stdout

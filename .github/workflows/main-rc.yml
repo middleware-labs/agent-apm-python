@@ -31,3 +31,32 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
+
+  deploy-k8s:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        echo "Building middleware-io-k8s (HTTP exporter)..."
+        cp pyproject-k8s.toml pyproject.toml
+        pip install -r dev-requirements.txt
+        pip install setuptools wheel build twine
+    - name: Build and publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python -m build
+        twine upload dist/*
+    - name: Publish a Python distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}

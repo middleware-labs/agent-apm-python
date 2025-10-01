@@ -43,3 +43,42 @@ jobs:
           Release ${{ github.ref }}
         draft: false
         prerelease: false
+  deploy-k8s:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        cp pyproject-k8s.toml pyproject.toml
+        pip install -r dev-requirements.txt
+        pip install setuptools wheel build twine
+    - name: Build and publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python -m build
+        twine upload dist/*
+    - name: Publish a Python distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release K8s ${{ github.ref }}
+        body: |
+          Release K8s ${{ github.ref }}
+        draft: false
+        prerelease: false
