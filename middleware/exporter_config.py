@@ -7,7 +7,7 @@ Automatically selects HTTP or gRPC exporters based on installed package.
 """
 
 import logging
-from middleware.version import __package_name__
+from middleware.version import __package_name__ , __version__
 
 _logger = logging.getLogger(__name__)
 
