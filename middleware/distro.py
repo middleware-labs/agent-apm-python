@@ -8,7 +8,12 @@ from typing import Optional
 
 import pkg_resources
 from opentelemetry.instrumentation.distro import BaseDistro
-from middleware.metrics import create_meter_provider
+try:
+    from middleware.metrics import create_meter_provider
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+
 from middleware.options import MWOptions, parse_bool
 from middleware.resource import create_resource
 from middleware.trace import create_tracer_provider
@@ -80,7 +85,10 @@ def mw_tracker_internal(
     if options.collect_traces:
         create_tracer_provider(options, resource)
     if options.collect_metrics:
-        create_meter_provider(options, resource)
+        if PSUTIL_AVAILABLE:
+            create_meter_provider(options, resource)
+        else:
+            _logger.warning("Metrics collection skipped - psutil not available")
     if options.collect_logs:
         handler = create_logger_handler(options, resource)
         logging.getLogger().addHandler(handler)

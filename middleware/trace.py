@@ -1,4 +1,4 @@
-import grpc
+# import grpc
 import sys
 import logging
 from opentelemetry.sdk.resources import Resource
@@ -8,13 +8,14 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
     ConsoleSpanExporter,
 )
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from middleware.exporter_config import create_trace_exporter
 from opentelemetry.processor.baggage import ALLOW_ALL_BAGGAGE_KEYS, BaggageSpanProcessor
 from middleware.options import MWOptions
 from opentelemetry.trace import set_tracer_provider, Span
 from middleware.sampler import configure_sampler
 
 _logger = logging.getLogger(__name__)
+
 
 class ExceptionFilteringSpanProcessor(SpanProcessor):
     def on_start(self, span: ReadableSpan, parent_context):
@@ -32,7 +33,10 @@ class ExceptionFilteringSpanProcessor(SpanProcessor):
             seen_stack_traces = set()
             filtered_events = []
             for event in span.events:
-                if event.name == "exception" and "exception.stack_details" in event.attributes:
+                if (
+                    event.name == "exception"
+                    and "exception.stack_details" in event.attributes
+                ):
                     stack_trace = event.attributes.get("exception.stack_trace")
                     seen_stack_traces.add(stack_trace)
                     filtered_events.append(event)
@@ -50,6 +54,7 @@ class ExceptionFilteringSpanProcessor(SpanProcessor):
     def force_flush(self, timeout_millis=None):
         pass
 
+
 def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProvider:
     """
     Configures and returns a new TracerProvider to send traces telemetry.
@@ -62,10 +67,8 @@ def create_tracer_provider(options: MWOptions, resource: Resource) -> TracerProv
         TracerProvider: the new tracer provider
     """
 
-    exporter = OTLPSpanExporter(
-        endpoint=options.target,
-        compression=grpc.Compression.Gzip,
-    )
+    exporter = create_trace_exporter(options.target)
+
     trace_provider = TracerProvider(
         resource=resource, shutdown_on_exit=True, sampler=configure_sampler(options)
     )

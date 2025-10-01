@@ -4,20 +4,21 @@ import threading
 import gc
 import functools
 from typing import Generator
-import grpc
+# import grpc
 import sys
 import logging
 from sys import getswitchinterval
 from typing import NamedTuple
 from opentelemetry.metrics import CallbackOptions, Observation, set_meter_provider
-import grpc
+# import grpc
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.metrics import MeterProvider, Meter
 from opentelemetry.sdk.metrics.export import (
     PeriodicExportingMetricReader,
     ConsoleMetricExporter,
 )
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from middleware.exporter_config import create_metric_exporter
+
 from middleware.options import MWOptions
 
 _logger = logging.getLogger(__name__)
@@ -34,11 +35,8 @@ def create_meter_provider(options: MWOptions, resource: Resource):
     Returns:
         MeterProvider: the new meter provider
     """
-
-    exporter = OTLPMetricExporter(
-        endpoint=options.target,
-        compression=grpc.Compression.Gzip,
-    )
+    exporter = create_metric_exporter(options.target)
+    
     readers = [PeriodicExportingMetricReader(exporter)]
     if options.console_exporter:
         output = sys.stdout

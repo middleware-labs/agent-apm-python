@@ -1,10 +1,9 @@
-import grpc
+# import grpc
 import sys
 import logging
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
-    OTLPLogExporter,
-)
+from middleware.exporter_config import create_log_exporter
+
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import (
     BatchLogRecordProcessor,
@@ -29,10 +28,8 @@ def create_logger_handler(options: MWOptions, resource: Resource) -> LoggingHand
     Returns:
         LoggerProvider: the new logger provider
     """
-    exporter = OTLPLogExporter(
-        endpoint=options.target,
-        compression=grpc.Compression.Gzip,
-    )
+    exporter = create_log_exporter(options.target)
+
     logger_provider = LoggerProvider(resource=resource, shutdown_on_exit=True)
     logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
     if options.console_exporter:
@@ -60,6 +57,7 @@ def create_logger_handler(options: MWOptions, resource: Resource) -> LoggingHand
 
     return handler
 
+
 class MWLoggingHandler(LoggingHandler):
     @staticmethod
     def _get_attributes(record: LogRecord):
@@ -69,7 +67,7 @@ class MWLoggingHandler(LoggingHandler):
             if key == "request":
                 if hasattr(value, "method") and hasattr(value, "path"):
                     if len(vars(value)) == 2:
-                        attributes[key] = f'{value.method} {value.path}'
+                        attributes[key] = f"{value.method} {value.path}"
                     else:
                         attributes[key] = str(value)
                 else:
