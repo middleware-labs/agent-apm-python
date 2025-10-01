@@ -69,7 +69,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
+        password: ${{ secrets.PYPI_ORG_TOKEN }}
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
