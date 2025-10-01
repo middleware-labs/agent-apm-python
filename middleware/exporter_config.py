@@ -7,7 +7,7 @@ Automatically selects HTTP or gRPC exporters based on installed package.
 """
 
 import logging
-from middleware.version import __package_name__ , __version__
+from middleware.version import __package_name__, __version__
 
 _logger = logging.getLogger(__name__)
 
@@ -18,11 +18,6 @@ IS_K8S_VARIANT = "k8s" in __package_name__.lower()
 _logger.info(f"Detected package: {__package_name__}")
 
 # IMPORT APPROPRIATE EXPORTERS
-
-print("[EXPORTER] Starting exporter configuration...")
-print(f"[EXPORTER] Package name: {__package_name__}")
-print(f"[EXPORTER] Package version: {__version__}")
-print("IS_K8S_VARIANT",IS_K8S_VARIANT)
 
 if IS_K8S_VARIANT:
     # K8s variant - MUST use HTTP exporters
