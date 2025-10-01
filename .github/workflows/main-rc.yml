@@ -46,6 +46,7 @@ jobs:
       run: |
         echo "Building middleware-io-k8s (HTTP exporter)..."
         cp pyproject-k8s.toml pyproject.toml
+        cat pyproject.toml
         pip install -r dev-requirements.txt
         pip install setuptools wheel build twine
     - name: Build and publish
