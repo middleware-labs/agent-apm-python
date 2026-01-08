@@ -374,7 +374,7 @@ typing-extensions==4.12.2
     #   asgiref
     #   opentelemetry-resourcedetector-gcp
     #   opentelemetry-sdk
-urllib3==2.2.3
+urllib3==2.6.3
     # via requests
 wrapt==1.16.0
     # via
