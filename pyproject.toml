@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "middleware-io"
-version = "2.4.1"
+version = "2.4.2rc2"
 requires-python = ">=3.8"
 description = "Middleware's APM tool enables Python developers to effortlessly monitor their applications, gathering distributed tracing, metrics, logs, and profiling data for valuable insights and performance optimization."
 authors = [{ name = "middleware-dev" }]
@@ -28,8 +28,8 @@ dependencies =[
     "opentelemetry-sdk==1.36.0",
     "opentelemetry-semantic-conventions==0.57b0",
     "opentelemetry-util-http==0.57b0",
-    "requests==2.32.3",
-    "psutil==6.0.0",
+    "requests>=2.32.3",
+    "psutil>=6.0.0",
     "opentelemetry-processor-baggage==0.57b0",
     "opentelemetry-propagator-b3==1.36.0",
     "opentelemetry-propagator-jaeger==1.36.0",
@@ -164,3 +164,6 @@ max-line-length = "88"
 
 [tool.isort]
 profile = "black"
+
+[tool.setuptools.packages.find]
+include = ["middleware*"]
