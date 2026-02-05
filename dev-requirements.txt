@@ -357,7 +357,7 @@ packaging==24.2
     #   opentelemetry-instrumentation-flask
     #   opentelemetry-instrumentation-pika
     #   opentelemetry-instrumentation-sqlalchemy
-protobuf==5.26.1
+protobuf==5.29.6
     # via
     #   googleapis-common-protos
     #   opentelemetry-proto
